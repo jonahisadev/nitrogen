@@ -21,5 +21,17 @@ namespace Nitrogen {
 		buffer[size] = '\0';
 		return buffer;
 	}
+	
+	bool Util::isNumber(const char* str) {
+		for (int i = 0; i < strlen(str); i++) {
+			if (str[i] > '9' || str[i] < '0')
+				return false;
+		}
+		return true;
+	}
+	
+	int Util::toNum(const char* str, int base) {
+		return (int)strtol(str, (char**)nullptr, base);
+	}
 
 }

@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 	if (!strcmp(argv[1], "c")) {
 		int length;
 		char* source = Util::readFile(argv[2], &length);
-		Parser* p = new Parser(source, length);
+		Parser* p = new Parser(strdup(source), length);
 		p->start();
 		delete p;
 	}
