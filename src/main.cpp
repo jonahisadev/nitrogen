@@ -16,9 +16,21 @@ int main(int argc, char** argv) {
 	if (!strcmp(argv[1], "c")) {
 		int length;
 		char* source = Util::readFile(argv[2], &length);
+		
 		Parser* p = new Parser(strdup(source), length);
 		p->start();
+		
+		Context* c = p->createContext();
+		c->start();
+		
+		Compiler* comp = c->createCompiler();
+		comp->start();
+		
+		delete c;
 		delete p;
+		
+		system("nvmc -c out.nvm");
+		//system("rm -rf out.nvm");
 	}
 	
 	return 0;

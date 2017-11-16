@@ -15,4 +15,4 @@ $(EXEC): $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean:
-	rm -rf *.o src/*.o $(EXEC) *.nc
+	rm -rf *.o src/*.o $(EXEC) *.nc *.nvm

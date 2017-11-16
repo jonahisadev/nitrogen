@@ -4,9 +4,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
 #include <Nitrogen/List.h>
 #include <Nitrogen/Token.h>
 #include <Nitrogen/Util.h>
+#include <Nitrogen/Context.h>
 
 namespace Nitrogen {
 
@@ -25,6 +27,8 @@ namespace Nitrogen {
 		void start();
 		bool isImportant(char c);
 		int isKeyword(char* str);
+		
+		Context* createContext();
 		
 		int getListSize() const { return tokens->getSize(); }
 	};

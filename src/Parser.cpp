@@ -142,5 +142,12 @@ namespace Nitrogen {
 				return false;
 		}
 	}
+	
+	Context* Parser::createContext() {
+		Context* c = new Context();
+		c->setTokens(this->tokens);
+		c->setNames(this->names);
+		return c;
+	}
 
 }

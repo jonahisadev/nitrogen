@@ -1,35 +1,35 @@
-#ifndef NITROGEN_COMPILER_H
-#define NITROGEN_COMPILER_H
+#ifndef NITROGEN_CONTEXT_H
+#define NITROGEN_CONTEXT_H
 
-#include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 #include <Nitrogen/Util.h>
-#include <Nitrogen/Token.h>
 #include <Nitrogen/List.h>
-#include <Nitrogen/Template.h>
+#include <Nitrogen/Token.h>
+#include <Nitrogen/Compiler.h>
 
 namespace Nitrogen {
 
-	class Compiler {
+	class Context {
 	private:
-		FILE* out;
-		
 		List<Token*>* tokens;
 		List<char*>* names;
 		List<char*>* symbols;
 		
 	public:
-		Compiler();
-		~Compiler();
+		Context();
+		~Context();
 		
 		void start();
+		void verifySymbol(Token* t);
+		
+		Compiler* createCompiler();
 		
 		void setTokens(List<Token*>* tokens) { this->tokens = tokens; };
 		void setNames(List<char*>* names) { this->names = names; };
-		void setSymbols(List<char*>* symbols) { this->symbols = symbols; };
 	};
 
 }
 
-#endif // NITROGEN_COMPILER_H
+#endif // NITROGEN_CONTEXT_H
