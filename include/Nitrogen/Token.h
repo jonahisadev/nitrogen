@@ -27,6 +27,7 @@ namespace Nitrogen {
 		LEFT_BRACK,
 		RIGHT_BRACK,
 		COLON,
+		EQUALS,
 	};
 
 	class Token;

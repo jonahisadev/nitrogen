@@ -19,6 +19,8 @@ namespace Nitrogen {
 		List<char*>* names;
 		List<char*>* symbols;
 		
+		List<char*>* varBuffer;
+		
 	public:
 		Compiler();
 		~Compiler();

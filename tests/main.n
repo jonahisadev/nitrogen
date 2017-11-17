@@ -1,3 +1,5 @@
+x: Int = 42
+
 func main()[Int]:
-	return 42
+	return x
 endf

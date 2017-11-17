@@ -24,6 +24,14 @@ start:
 R"str(	mov erx %d
 )str";
 
+	static const char* VM_RETURN_G_VAR = 
+R"str(	l%s erx $%s
+)str";
+
+	static const char* VM_VAR_DEC_AND_INIT = 
+R"str(%s: %s %d
+)str";
+
 }
 
 #endif // NITROGEN_TEMPLATE_H

@@ -17,15 +17,18 @@ namespace Nitrogen {
 			t = tokens->get(i);
 			
 			if (t->getType() == NAME) {
+				// Variable Declaration
+				if (tokens->get(i+1)->getType() == SPECIAL &&
+						tokens->get(i+1)->getData() == COLON) {
+					addSymbol(t);
+				}
+				
 				// Function Name
-				if (tokens->get(i-1)->getType() == KEYWORD &&
+				else if (tokens->get(i-1)->getType() == KEYWORD &&
 						tokens->get(i-1)->getData() == FUNC &&
 						tokens->get(i+1)->getType() == SPECIAL &&
 						tokens->get(i+1)->getData() == LEFT_PAR) {
-					symbols->add(names->get(t->getData()));
-					t->setType(ID);
-					t->setData(symbols->getSize()-1);
-					verifySymbol(t);
+					addSymbol(t);
 				}
 				
 				// Function Type
@@ -35,6 +38,14 @@ namespace Nitrogen {
 						tokens->get(i+1)->getData() == RIGHT_BRACK) {
 					t->setType(TYPE);
 				}
+				
+				/**
+				// Return Global Variable
+				else if (tokens->get(i-1)->getType() == KEYWORD &&
+						tokens->get(i-1)->getData() == RETURN) {
+					
+				}
+				**/
 			}
 		}
 	}
@@ -50,6 +61,13 @@ namespace Nitrogen {
 				exit(1);
 			}
 		}
+	}
+	
+	void Context::addSymbol(Token* t) {
+		symbols->add(names->get(t->getData()));
+		t->setType(ID);
+		t->setData(symbols->getSize()-1);
+		verifySymbol(t);
 	}
 	
 	Compiler* Context::createCompiler() {

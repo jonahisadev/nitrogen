@@ -23,6 +23,7 @@ namespace Nitrogen {
 		
 		void start();
 		void verifySymbol(Token* t);
+		void addSymbol(Token* t);
 		
 		Compiler* createCompiler();
 		

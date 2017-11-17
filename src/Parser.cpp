@@ -40,11 +40,7 @@ namespace Nitrogen {
 		
 		lex[lexi] = '\0';
 		
-		printf("(%d) ", line);
-		
 		if (lexi == 0) {
-			printf("special: %c\n", source[i]);
-			
 			switch (source[i]) {
 				case '(': {
 					tokens->add(new Token(SPECIAL, LEFT_PAR, line));
@@ -66,15 +62,26 @@ namespace Nitrogen {
 					tokens->add(new Token(SPECIAL, COLON, line));
 					break;
 				}
+				case '=': {
+					tokens->add(new Token(SPECIAL, EQUALS, line));
+					break;
+				}
+				case '\n': {
+					goto end;
+				}
 				default: {
 					printf("ERR: (%d) Invalid special character\n", line);
 					exit(1);
 				}
 			}
 			
+			printf("(%d) ", line);
+			printf("special: %c\n", source[i]);
 			i++;
 			goto end;
 		}
+		
+		printf("(%d) ", line);
 		
 		// printf("%s\n", lex);
 		
@@ -137,6 +144,8 @@ namespace Nitrogen {
 			case ':':
 				return true;
 			case ' ':
+				return true;
+			case '=':
 				return true;
 			default:
 				return false;
