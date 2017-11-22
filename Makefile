@@ -8,6 +8,12 @@ EXEC = main
 
 all: $(OBJ) $(EXEC) $(HEAD)
 
+debug: CFLAGS+=-DDEBUG
+debug: all
+	
+release: CFLAGS+=-O3
+release: all
+
 $(EXEC): $(OBJ)
 	$(CC) $(LDFLAGS) $^ -o $@
 

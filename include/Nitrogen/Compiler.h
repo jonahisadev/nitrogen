@@ -8,6 +8,7 @@
 #include <Nitrogen/Token.h>
 #include <Nitrogen/List.h>
 #include <Nitrogen/Template.h>
+#include <Nitrogen/Type.h>
 
 namespace Nitrogen {
 
@@ -18,6 +19,7 @@ namespace Nitrogen {
 		List<Token*>* tokens;
 		List<char*>* names;
 		List<char*>* symbols;
+		List<Variable*>* gvars;
 		
 		List<char*>* varBuffer;
 		
@@ -30,6 +32,10 @@ namespace Nitrogen {
 		void setTokens(List<Token*>* tokens) { this->tokens = tokens; };
 		void setNames(List<char*>* names) { this->names = names; };
 		void setSymbols(List<char*>* symbols) { this->symbols = symbols; };
+		void setGlobalVariables(List<Variable*>* gvars) { this->gvars = gvars; }
+		
+		const char* getStoreSize(Token* var);
+		const char* getLoadSize(Token* var);
 	};
 
 }

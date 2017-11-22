@@ -1,5 +1,5 @@
-x: Int = 42
+x: i32 = 42
 
-func main()[Int]:
+func main()[i32]:
 	return x
 endf

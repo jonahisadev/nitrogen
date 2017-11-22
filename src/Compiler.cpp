@@ -8,7 +8,7 @@ namespace Nitrogen {
 	}
 	
 	Compiler::~Compiler() {
-		// Nothing
+		delete this->varBuffer;
 	}
 	
 	void Compiler::start() {
@@ -20,13 +20,13 @@ namespace Nitrogen {
 			t = tokens->get(i);
 			
 			// Variable Declaration and Initialization
-			if (t->getType() == ID &&
+			if (t->getType() == VAR &&
 					tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == COLON &&
-					tokens->get(i+2)->getType() == NAME &&
+					tokens->get(i+2)->getType() == TYPE &&
 					tokens->get(i+3)->getType() == SPECIAL && tokens->get(i+3)->getData() == EQUALS &&
 					tokens->get(i+4)->getType() == NUMBER) {
 				char* buf = new char[256];
-				sprintf(buf, VM_VAR_DEC_AND_INIT, symbols->get(t->getData()), "dd", tokens->get(i+4)->getData());
+				sprintf(buf, VM_VAR_DEC_AND_INIT, gvars->get(t->getData())->name, getStoreSize(t), tokens->get(i+4)->getData());
 				this->varBuffer->add(buf);
 			}
 			
@@ -43,8 +43,9 @@ namespace Nitrogen {
 			
 			// Return Global Variable
 			else if (t->getType() == KEYWORD && t->getData() == RETURN &&
-					tokens->get(i+1)->getType() == NAME) {
-				fprintf(out, VM_RETURN_G_VAR, "dd", names->get(tokens->get(i+1)->getData()));
+					tokens->get(i+1)->getType() == VAR) {
+				t = tokens->get(i+1);
+				fprintf(out, VM_RETURN_G_VAR, getStoreSize(t), gvars->get(t->getData())->name);
 			}
 			
 			// End Function
@@ -55,9 +56,32 @@ namespace Nitrogen {
 		
 		fprintf(out, "%s\n", "#section DATA");
 		for (int i = 0; i < varBuffer->getSize(); i++) {
-			fprintf(out, "%s\n", varBuffer->get(i));
+			fprintf(out, "%s", varBuffer->get(i));
 		}
+		fprintf(out, "%s", "\n");
 		fclose(out);
+	}
+	
+	const char* Compiler::getStoreSize(Token* var) {
+		switch (gvars->get(var->getData())->type->size) {
+			case 4:
+				return "dd";
+			case 2:
+				return "dw";
+			default:
+				return "dd";
+		}
+	}
+	
+	const char* Compiler::getLoadSize(Token* var) {
+		switch (gvars->get(var->getData())->type->size) {
+			case 4:
+				return "ldd";
+			case 2:
+				return "ldw";
+			default:
+				return "ldd";
+		}
 	}
 
 }

@@ -13,6 +13,7 @@ namespace Nitrogen {
 		NAME,
 		ID,
 		TYPE,
+		VAR,
 	};
 	
 	enum TokenKeyword {

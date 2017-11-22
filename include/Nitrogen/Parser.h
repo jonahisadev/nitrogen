@@ -19,6 +19,7 @@ namespace Nitrogen {
 		
 		List<Token*>* tokens;
 		List<char*>* names;
+		List<Type*>* types;
 		
 	public:
 		Parser(char* source, int length);
@@ -27,6 +28,7 @@ namespace Nitrogen {
 		void start();
 		bool isImportant(char c);
 		int isKeyword(char* str);
+		int isType(char* str);
 		
 		Context* createContext();
 		

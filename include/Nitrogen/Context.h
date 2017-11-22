@@ -8,6 +8,7 @@
 #include <Nitrogen/List.h>
 #include <Nitrogen/Token.h>
 #include <Nitrogen/Compiler.h>
+#include <Nitrogen/Type.h>
 
 namespace Nitrogen {
 
@@ -16,6 +17,8 @@ namespace Nitrogen {
 		List<Token*>* tokens;
 		List<char*>* names;
 		List<char*>* symbols;
+		List<Type*>* types;
+		List<Variable*>* gvars;
 		
 	public:
 		Context();
@@ -24,11 +27,15 @@ namespace Nitrogen {
 		void start();
 		void verifySymbol(Token* t);
 		void addSymbol(Token* t);
+		void addGlobalVariable(Token* t, Token* type);
+		
+		int isGlobalVariable(char* name);
 		
 		Compiler* createCompiler();
 		
 		void setTokens(List<Token*>* tokens) { this->tokens = tokens; };
 		void setNames(List<char*>* names) { this->names = names; };
+		void setTypes(List<Type*>* types) { this->types = types; }
 	};
 
 }
