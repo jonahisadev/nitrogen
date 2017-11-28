@@ -4,6 +4,8 @@ A high level language built on [NVM](https://github.com/jonahisadev/nitrogen-vm)
 
 ## To Do
 
-* Add actual variable support
-* Type list (initially populated with primitives)
+* Better variable parsing
+    * Context: Only parse as a generic variable
+    * Compiler: Decide what kind of variable it is
+    * Or something like that
 * Math tree parser

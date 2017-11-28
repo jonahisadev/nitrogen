@@ -21,43 +21,61 @@ namespace Nitrogen {
 			if (t->getType() == NAME) {
 				
 				int index;
-				
-				// Variable Declaration
-				if (tokens->get(i+1)->getType() == SPECIAL &&
-						tokens->get(i+1)->getData() == COLON &&
-						tokens->get(i+2)->getType() == TYPE) {
-					addGlobalVariable(t, tokens->get(i+2));
+
+				// If it's not global, it's local
+				if (tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == EQUALS &&
+						tokens->get(i+2)->getType() == NUMBER) {
+					t->setType(LVAR);
 				}
-				
-				else if ((index = isGlobalVariable(names->get(t->getData()))) != -1) {
-					t->setType(VAR);
+					// Function Name
+				else if (i != 0 && tokens->get(i - 1)->getType() == KEYWORD &&
+						 tokens->get(i - 1)->getData() == FUNC &&
+						 tokens->get(i + 1)->getType() == SPECIAL &&
+						 tokens->get(i + 1)->getData() == LEFT_PAR)
+				{
+					addSymbol(t);
+				}
+
+				// Function Type
+				else if (i != 0 && tokens->get(i - 1)->getType() == SPECIAL &&
+						tokens->get(i - 1)->getData() == LEFT_BRACK &&
+						tokens->get(i + 1)->getType() == SPECIAL &&
+						tokens->get(i + 1)->getData() == RIGHT_BRACK)
+				{
+					t->setType(TYPE);
+				}
+
+				// Function Parameter
+				else if (i != 0 &&tokens->get(i - 1)->getType() == SPECIAL && tokens->get(i - 1)->getData() == LEFT_PAR &&
+						tokens->get(i + 1)->getType() == SPECIAL && tokens->get(i + 1)->getData() == COLON &&
+						tokens->get(i + 2)->getType() == TYPE)
+				{
+					// printf("first param\n");
+					t->setType(PVAR);
+				}
+				else if (i != 0 && tokens->get(i - 1)->getType() == SPECIAL && tokens->get(i - 1)->getData() == COMMA &&
+						tokens->get(i + 1)->getType() == SPECIAL && tokens->get(i + 1)->getData() == COLON &&
+						tokens->get(i + 2)->getType() == TYPE)
+				{
+					// printf("second param\n");
+					t->setType(PVAR);
+				}
+
+				// Variable Declaration
+				else if (tokens->get(i + 1)->getType() == SPECIAL &&
+					tokens->get(i + 1)->getData() == COLON &&
+					tokens->get(i + 2)->getType() == TYPE)
+				{
+					addGlobalVariable(t, tokens->get(i + 2));
+				}
+
+				// Global Variable Reference
+				if ((index = isGlobalVariable(names->get(t->getData()))) != -1)
+				{
+					t->setType(GVAR);
 					t->setData(index);
 					continue;
 				}
-				
-				// Function Name
-				else if (tokens->get(i-1)->getType() == KEYWORD &&
-						tokens->get(i-1)->getData() == FUNC &&
-						tokens->get(i+1)->getType() == SPECIAL &&
-						tokens->get(i+1)->getData() == LEFT_PAR) {
-					addSymbol(t);
-				}
-				
-				// Function Type
-				else if (tokens->get(i-1)->getType() == SPECIAL &&
-						tokens->get(i-1)->getData() == LEFT_BRACK &&
-						tokens->get(i+1)->getType() == SPECIAL &&
-						tokens->get(i+1)->getData() == RIGHT_BRACK) {
-					t->setType(TYPE);
-				}
-				
-				/**
-				// Return Global Variable
-				else if (tokens->get(i-1)->getType() == KEYWORD &&
-						tokens->get(i-1)->getData() == RETURN) {
-					
-				}
-				**/
 			}
 		}
 	}
@@ -93,7 +111,7 @@ namespace Nitrogen {
 		Type* dtype = types->get(type->getData());
 		
 		gvars->add(new Variable(name, dtype));
-		t->setType(VAR);
+		t->setType(GVAR);
 		t->setData(gvars->getSize() - 1);
 	}
 	
@@ -111,6 +129,7 @@ namespace Nitrogen {
 		c->setTokens(tokens);
 		c->setNames(names);
 		c->setSymbols(symbols);
+		c->setTypes(types);
 		c->setGlobalVariables(gvars);
 		return c;
 	}

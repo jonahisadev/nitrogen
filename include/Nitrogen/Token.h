@@ -13,7 +13,10 @@ namespace Nitrogen {
 		NAME,
 		ID,
 		TYPE,
-		VAR,
+		
+		GVAR,		// Global
+		PVAR,		// Parameter
+		LVAR,		// Local
 	};
 	
 	enum TokenKeyword {
@@ -29,6 +32,8 @@ namespace Nitrogen {
 		RIGHT_BRACK,
 		COLON,
 		EQUALS,
+		COMMA,
+		EXCLAIM,
 	};
 
 	class Token;

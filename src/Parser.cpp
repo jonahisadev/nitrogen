@@ -12,6 +12,9 @@ namespace Nitrogen {
 		this->types = new List<Type*>(1);
 		types->add(new Type("i32", 4));
 		types->add(new Type("i16", 2));
+		types->add(new Type("i8", 1));
+		types->add(new Type("void", 0));
+		types->add(new Type("string", -1));
 	}
 	
 	Parser::~Parser() {
@@ -69,6 +72,14 @@ namespace Nitrogen {
 				}
 				case '=': {
 					tokens->add(new Token(SPECIAL, EQUALS, line));
+					break;
+				}
+				case ',': {
+					tokens->add(new Token(SPECIAL, COMMA, line));
+					break;
+				}
+				case '!': {
+					tokens->add(new Token(SPECIAL, EXCLAIM, line));
 					break;
 				}
 				case '\n': {
@@ -166,6 +177,10 @@ namespace Nitrogen {
 			case ' ':
 				return true;
 			case '=':
+				return true;
+			case ',':
+				return true;
+			case '!':
 				return true;
 			default:
 				return false;

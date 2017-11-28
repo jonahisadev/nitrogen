@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include <Nitrogen/List.h>
+
 namespace Nitrogen {
 
 	struct Type {
@@ -35,6 +37,45 @@ namespace Nitrogen {
 		~Variable() {
 			delete this->name;
 		}
+	};
+	template class List<Variable*>;
+	
+	struct Function {
+		const char* name;
+		Type* ret;
+		List<Variable*>* params;
+		List<Variable*>* locals;
+		
+		Function(const char* name) {
+			this->name = strdup(name);
+			this->params = new List<Variable*>(1);
+			this->locals = new List<Variable*>(1);
+		}
+		
+		~Function() {
+			delete this->name;
+		}
+
+		int isParam(const char* str) {
+			for (int i = 0; i < params->getSize(); i++) {
+				if (!strcmp(params->get(i)->name, str)) {
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		int getParamOffset(int index) {
+			int size = 0;
+			for (int i = 0; i < index; i++) {
+				size += params->get(i)->type->size;
+			}
+			return size;
+		}
+		
+		void setReturnType(Type* ret) { this->ret = ret; }
+		void addParam(Variable* param) { this->params->add(param); }
+		void addLocal(Variable* local) { this->locals->add(local); }
 	};
 
 }

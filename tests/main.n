@@ -1,5 +1,13 @@
-x: i32 = 42
+x: i32!
 
 func main()[i32]:
+	return 0
+endf
+
+func test(a: i32, b: i32)[i32]:
+	return b
+endf
+
+func another()[i32]:
 	return x
 endf
