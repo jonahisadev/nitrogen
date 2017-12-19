@@ -1,0 +1,7 @@
+x: i32!
+y: i16 = 42
+
+func main()[i32]:
+    x = 42
+    return x
+endf

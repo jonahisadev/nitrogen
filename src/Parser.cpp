@@ -48,6 +48,7 @@ namespace Nitrogen {
 		
 		lex[lexi] = '\0';
 		
+		// SPECIAL
 		if (lexi == 0) {
 			switch (source[i]) {
 				case '(': {
@@ -82,11 +83,18 @@ namespace Nitrogen {
 					tokens->add(new Token(SPECIAL, EXCLAIM, line));
 					break;
 				}
+				case '.': {
+					tokens->add(new Token(SPECIAL, DOT, line));
+					break;
+				}
+				case ' ': {
+					goto end;
+				}
 				case '\n': {
 					goto end;
 				}
 				default: {
-					printf("ERR: (%d) Invalid special character\n", line);
+					printf("ERR: (%d) Invalid special character '%c'\n", line, source[i]);
 					exit(1);
 				}
 			}
@@ -103,24 +111,28 @@ namespace Nitrogen {
 		
 		int token;
 		
+		// KEYWORD
 		if ((token = isKeyword(lex)) != -1) {
 			// printf("key: %s\n", lex);
 			tokens->add(new Token(KEYWORD, token, line));
 			goto end;
 		} 
 		
+		// NUMBER
 		else if (Util::isNumber(lex)) {
 			// printf("num: %d\n", Util::toNum(lex, 10));
 			tokens->add(new Token(NUMBER, Util::toNum(lex, 10), line));
 			goto end;
 		}
 		
+		// TYPE
 		else if ((token = isType(lex)) != -1) {
 			// printf("type: %d\n", token);
 			tokens->add(new Token(TYPE, token, line));
 			goto end;
 		}
 		
+		// OTHER
 		else {
 			// printf("name: %s\n", lex);
 			names->add(strdup(lex));
@@ -149,6 +161,8 @@ namespace Nitrogen {
 			return TokenKeyword::RETURN;
 		else if (!strcmp(str, "endf"))
 			return TokenKeyword::ENDF;
+		else if (!strcmp(str, "native"))
+			return TokenKeyword::NATIVE;
 		else
 			return -1;
 	}
@@ -164,6 +178,7 @@ namespace Nitrogen {
 	
 	bool Parser::isImportant(char c) {
 		switch (c) {
+				return true;
 			case '(':
 				return true;
 			case ')':
@@ -181,6 +196,8 @@ namespace Nitrogen {
 			case ',':
 				return true;
 			case '!':
+				return true;
+			case '.':
 				return true;
 			default:
 				return false;

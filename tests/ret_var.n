@@ -1,0 +1,5 @@
+number: i32 = 42
+
+func main()[i32]:
+    return number
+endf

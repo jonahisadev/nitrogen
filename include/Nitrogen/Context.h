@@ -16,20 +16,14 @@ namespace Nitrogen {
 	private:
 		List<Token*>* tokens;
 		List<char*>* names;
-		List<char*>* symbols;
+		List<char*>* funcs;
 		List<Type*>* types;
-		List<Variable*>* gvars;
 		
 	public:
 		Context();
 		~Context();
 		
 		void start();
-		void verifySymbol(Token* t);
-		void addSymbol(Token* t);
-		void addGlobalVariable(Token* t, Token* type);
-		
-		int isGlobalVariable(char* name);
 		
 		Compiler* createCompiler();
 		

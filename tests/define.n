@@ -1,0 +1,118 @@
+// This is a comment
+// They shall be used the remainder of
+// the definition file
+
+include "nitrogen.n"		// Include the standard library
+
+x: i32!						// Define an empty variable
+y: i32 = 42					// Define a variable with a value
+
+// Below is a function
+// Parameters are defined like globals
+// Return is between the brackets
+
+func add(a: i32, b: i32)[i32]:
+	return a + b
+endf
+
+// Below are arrays
+
+z: *i32 [5]!				// Create an empty array
+w: *i32 [5] = {1, 2, 3}		// Create an array with partial initialization
+n: *i32 [5] = {1,2,3,4,5}	// Create an array completely initialized
+
+func sub(a: *i32)[i32]:
+	return a[0] - a[1]		// Example of getting array values
+endf
+
+// Below are some branching examples
+
+func branching()[void]:
+	// For Loops
+	x: i32!
+	i: i32 = 0
+	for (i, i < 4, i += i):
+		x += i
+	end
+
+	// While
+	while (i > 0):
+		i -= 1
+	end
+
+	// If else
+	if (x == 6):
+		println("The loop worked!")
+	else if (x == 5):
+		println("Didn't work...")
+	else:
+		x = 0
+		println("The loop didn't work!")
+	end
+endf
+
+// Below is a structure
+
+struct Point:
+	// Data is here
+	x: i32
+	y: i32
+
+	// Constructor
+	// $ is like `this` from other languages
+	func new(x: i32, y: i32)[$]:
+		$.x = x
+		$.y = y
+	endf
+
+	// Here is a structure function
+	// $ is still being used
+	func translate(x: i32, y: i32)[void]:
+		$.x += x
+		$.y += y
+	endf
+end
+
+// Let's try and make a point,
+// use it, and delete it.
+
+func testPoint()[void]:
+	Point p = new Point(2, 3)		// Create a new point
+	p.translate(5, 6)				// Call a struct function
+	delete p						// Delete object
+endf
+
+// Below is an example of struct arrays.
+// These are not to be confused with pointers.
+// Structures are already pointers. '*' is
+// just used to define an array
+
+points: *Point [10]!
+
+// Below is an enum.
+// The enum type is declared after
+// the name of the enum.
+
+enum State: i32
+	ACTIVE = 1
+	DOWN = 0
+end
+
+// Below is a native function.
+// It is similar to a normal function
+// declaration, but does not have a body.
+
+native func helloNative()[i32] endf
+
+// This is the main method
+// NVM calls this first
+
+func main()[i32]:
+	add(5, 6)
+	sub(w)
+	branching()
+	testPoint()
+	helloNative()
+	
+	return 0
+endf

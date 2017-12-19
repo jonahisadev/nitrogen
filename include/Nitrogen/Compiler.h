@@ -18,7 +18,7 @@ namespace Nitrogen {
 		
 		List<Token*>* tokens;
 		List<char*>* names;
-		List<char*>* symbols;
+		List<char*>* funcs;
 		List<Type*>* types;
 		List<Variable*>* gvars;
 		
@@ -31,17 +31,18 @@ namespace Nitrogen {
 		~Compiler();
 		
 		void start();
+		void getNatives();
+		Function* createFunction(Token* name, int* index);
 
-		Function* createFunction(Token* t, int* index);
-		
 		void setTokens(List<Token*>* tokens) { this->tokens = tokens; };
 		void setNames(List<char*>* names) { this->names = names; };
-		void setSymbols(List<char*>* symbols) { this->symbols = symbols; };
+		void setFuncs(List<char*>* funcs) { this->funcs = funcs; };
 		void setTypes(List<Type*>* types) { this->types = types; }
-		void setGlobalVariables(List<Variable*>* gvars) { this->gvars = gvars; }
 		
-		const char* getStoreSize(Token* var);
+		const char* getStoreSize(Variable* var);
 		const char* getInstSize(Variable* v);
+
+		int isGlobal(char* name);
 	};
 
 }

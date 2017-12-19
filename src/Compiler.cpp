@@ -1,14 +1,18 @@
 #include <Nitrogen/Compiler.h>
 
+#define RTOKEN(x) tokens->get(i+x)
+
 namespace Nitrogen {
 
 	Compiler::Compiler() {
 		out = fopen("out.nvm", "w");
 		this->varBuffer = new List<char*>(1);
+		this->gvars = new List<Variable*>(1);
 	}
 	
 	Compiler::~Compiler() {
 		delete this->varBuffer;
+		delete this->gvars;
 	}
 	
 	void Compiler::start() {
@@ -18,84 +22,88 @@ namespace Nitrogen {
 		
 		for (int i = 0; i < tokens->getSize(); i++) {
 			t = tokens->get(i);
-			
-			int temp;
 
-			// FUNCTIONS
+			if (currentFunction == nullptr) {
 
-			if (currentFunction != nullptr) {
+				// Global Variable Declaration
+				if (t->getType() == VAR && 
+						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
+						RTOKEN(2)->getType() == TYPE &&
+						RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == EXCLAIM) {
+					Variable* v = new Variable(names->get(t->getData()), types->get(RTOKEN(2)->getData()));
+					gvars->add(v);
+					//t->setType(GVAR);
 
-				// Return Parameter
-				if (t->getType() == KEYWORD && t->getData() == RETURN &&
-						 	(temp = currentFunction->isParam(names->get(tokens->get(i + 1)->getData()))) != -1) {
-					int off = currentFunction->getParamOffset(temp);
-					Variable *v = currentFunction->params->get(temp);
-					fprintf(out, VM_RETURN_P_VAR, getInstSize(v), off + 8);
+					char* buf = new char[256];
+					sprintf(buf, VM_VAR_DEC_AND_INIT, v->name, getStoreSize(v), 0);
+					this->varBuffer->add(strdup(buf));
+					delete[] buf;
+				}
+
+				// Global Variable Declaration and Initialization
+				else if (t->getType() == VAR && 
+						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
+						RTOKEN(2)->getType() == TYPE &&
+						RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == EQUALS &&
+						RTOKEN(4)->getType() == NUMBER) {
+					Variable* v = new Variable(names->get(t->getData()), types->get(RTOKEN(2)->getData()));
+					gvars->add(v);
+					//t->setType(GVAR);
+
+					char* buf = new char[256];
+					sprintf(buf, VM_VAR_DEC_AND_INIT, v->name, getStoreSize(v), RTOKEN(4)->getData());
+					this->varBuffer->add(strdup(buf));
+					delete[] buf;
+				}
+
+				// Function
+				else if (t->getType() == KEYWORD && t->getData() == FUNC &&
+						RTOKEN(1)->getType() == ID) {
+					Function* f = createFunction(RTOKEN(1), &i);
+					currentFunction = f;
+					fprintf(out, VM_LABEL, f->name);
+				}
+
+			} else {
+				int temp;
+
+				// End Function
+				if (t->getType() == KEYWORD && t->getData() == ENDF) {
+					fprintf(out, "\t%s\n\n", "ret");
+					currentFunction = nullptr;
+				}
+
+				// Return Variable
+				else if (t->getType() == KEYWORD && t->getData() == RETURN &&
+						RTOKEN(1)->getType() == VAR) {
+					temp = isGlobal(names->get(RTOKEN(1)->getData()));
+					if (temp != -1) {
+						Variable* v = gvars->get(temp);
+						fprintf(out, VM_RETURN_G_VAR, getStoreSize(v), v->name);
+					} else if ((temp = currentFunction->isParam(names->get(RTOKEN(1)->getData()))) != -1) {
+						Variable* v = currentFunction->params->get(temp);
+						fprintf(out, VM_RETURN_P_VAR, getInstSize(v), currentFunction->getParamOffset(temp) + 8);
+					}
 				}
 
 				// Return Constant
 				else if (t->getType() == KEYWORD && t->getData() == RETURN &&
-						 tokens->get(i + 1)->getType() == NUMBER) {
-					fprintf(out, VM_RETURN_CONST, tokens->get(i + 1)->getData());
+						RTOKEN(1)->getType() == NUMBER) {
+					fprintf(out, VM_RETURN_CONST, RTOKEN(1)->getData());
 				}
 
-				// Return Global Variable
-				else if (t->getType() == KEYWORD && t->getData() == RETURN &&
-						 tokens->get(i + 1)->getType() == GVAR) {
-					t = tokens->get(i + 1);
-					fprintf(out, VM_RETURN_G_VAR, getStoreSize(t), gvars->get(t->getData())->name);
-				}
-
-				// End Function
-				else if (t->getType() == KEYWORD && t->getData() == ENDF) {
-					currentFunction = nullptr;
-					fprintf(out, "\t%s\n\n", "ret");
+				// Set Global Variable
+				else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == EQUALS &&
+						RTOKEN(2)->getType() == NUMBER) {
+					Variable* v = gvars->get(temp);
+					fprintf(out, VM_VAR_SET, getStoreSize(v), v->name, RTOKEN(2)->getData());
 				}
 
 			}
 
-			// EVERYTHING ELSE
-
-			else {
-
-				// Variable Declaration and Initialization
-				if (t->getType() == GVAR &&
-						tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == COLON &&
-						tokens->get(i+2)->getType() == TYPE &&
-						tokens->get(i+3)->getType() == SPECIAL && tokens->get(i+3)->getData() == EQUALS &&
-						tokens->get(i+4)->getType() == NUMBER) {
-					char* buf = new char[256];
-					sprintf(buf, VM_VAR_DEC_AND_INIT, gvars->get(t->getData())->name, getStoreSize(t), tokens->get(i+4)->getData());
-					this->varBuffer->add(buf);
-				}
-
-				// Global Variable Setting
-				else if (t->getType() == GVAR &&
-						 tokens->get(i + 1)->getType() == SPECIAL && tokens->get(i + 1)->getData() == EQUALS &&
-						 tokens->get(i + 2)->getType() == NUMBER) {
-					fprintf(out, VM_VAR_SET, getStoreSize(t), gvars->get(t->getData())->name, tokens->get(i + 2)->getData());
-				}
-
-				// Variable Declaration
-				else if (t->getType() == GVAR &&
-						tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == COLON &&
-						tokens->get(i+2)->getType() == TYPE &&
-						tokens->get(i+3)->getType() == SPECIAL && tokens->get(i+3)->getData() == EXCLAIM) {
-					char* buf = new char[256];
-					sprintf(buf, VM_VAR_DEC_AND_INIT, gvars->get(t->getData())->name, getStoreSize(t), 0);
-					this->varBuffer->add(buf);
-				}
-				
-				// Function
-				else if (t->getType() == KEYWORD && t->getData() == FUNC) {
-					Function* f = createFunction(t, &i);
-					currentFunction = f;
-					fprintf(out, VM_LABEL, f->name);
-				}
-				
-			}
 		}
-		
+
 		fprintf(out, "%s\n", "#section DATA");
 		for (int i = 0; i < varBuffer->getSize(); i++) {
 			fprintf(out, "%s", varBuffer->get(i));
@@ -104,33 +112,50 @@ namespace Nitrogen {
 		fclose(out);
 	}
 
-	Function* Compiler::createFunction(Token *tok, int* index) {
-		Function* f = new Function(symbols->get(tokens->get(*index+1)->getData()));
-		*index += 2;
+	Function* Compiler::createFunction(Token* name, int* index) {
+		Function* f = new Function(funcs->get(name->getData()));
+		*index += 1;
+
 		Token* t;
-		for (int i = *index; i < tokens->getSize(); i++) {
+		int i;
+		for (i = *index; i < tokens->getSize(); i++) {
 			t = tokens->get(i);
 
-			// Parameter
-			if (t->getType() == PVAR) {
-				char* name = strdup(names->get(t->getData()));
-				Type* type = types->get(tokens->get(i+2)->getData());
+			if (t->getType() == VAR &&
+					RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
+					RTOKEN(2)->getType() == TYPE) {
+				char* name = names->get(t->getData());
+				Type* type = types->get(RTOKEN(2)->getData());
+				// printf("VAR: %s - %s\n", name, type->name);
 				f->addParam(new Variable(name, type));
 			}
 
-			// Return Type
-			else if (tokens->get(i-1)->getType() == SPECIAL && tokens->get(i-1)->getData() == LEFT_BRACK &&
+			else if (RTOKEN(-1)->getType() == SPECIAL && RTOKEN(-1)->getData() == LEFT_BRACK &&
 					t->getType() == TYPE &&
-					tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == RIGHT_BRACK) {
+					RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == RIGHT_BRACK) {
 				Type* type = types->get(t->getData());
+				// printf("RET: %s\n", type->name);
 				f->setReturnType(type);
+				i += 2;
+				break;
 			}
 		}
+
+		*index = i;
 		return f;
 	}
 
-	const char* Compiler::getStoreSize(Token* var) {
-		switch (gvars->get(var->getData())->type->size) {
+	int Compiler::isGlobal(char* name) {
+		for (int i = 0; i < gvars->getSize(); i++) {
+			if (!strcmp(name, gvars->get(i)->name)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	const char* Compiler::getStoreSize(Variable* v) {
+		switch (v->type->size) {
 			case 4:
 				return "d";
 			case 2:

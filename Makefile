@@ -4,11 +4,11 @@ CFLAGS = -I include -g -c -std=c++11
 SRC = $(wildcard *.cpp src/*.cpp)
 HEAD = $(wildcard include/Nitrogen/*.h)
 OBJ = $(SRC:.cpp=.o)
-EXEC = main
+EXEC = nlang
 
 all: $(OBJ) $(EXEC) $(HEAD)
 
-debug: CFLAGS+=-DDEBUG
+debug: CFLAGS+=-DDEBUG -O0
 debug: all
 	
 release: CFLAGS+=-O3
@@ -21,4 +21,4 @@ $(EXEC): $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean:
-	rm -rf *.o src/*.o $(EXEC) *.nc *.nvm
+	rm -rf *.o src/*.o $(EXEC) *.nc *.nvm .symdat

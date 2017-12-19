@@ -14,6 +14,7 @@ namespace Nitrogen {
 		ID,
 		TYPE,
 		
+		VAR,		// Generic
 		GVAR,		// Global
 		PVAR,		// Parameter
 		LVAR,		// Local
@@ -23,6 +24,7 @@ namespace Nitrogen {
 		FUNC,
 		RETURN,
 		ENDF,
+		NATIVE,
 	};
 	
 	enum TokenSpecial {
@@ -34,6 +36,7 @@ namespace Nitrogen {
 		EQUALS,
 		COMMA,
 		EXCLAIM,
+		DOT,
 	};
 
 	class Token;

@@ -25,7 +25,7 @@ R"str(	mov erx %d
 )str";
 
 	static const char* VM_RETURN_G_VAR = 
-R"str(	ld%s erx $%s
+R"str(	ld%s erx $g_%s
 )str";
 
 	static const char* VM_RETURN_P_VAR =
@@ -33,11 +33,11 @@ R"str(	%sget erx (ebp)+%d
 )str";
 
 	static const char* VM_VAR_DEC_AND_INIT = 
-R"str(%s: d%s %d
+R"str(g_%s: d%s %d
 )str";
 
 	static const char* VM_VAR_SET =
-R"str(	st%s $%s %d
+R"str(	st%s $g_%s %d
 )str";
 
 }

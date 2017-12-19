@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
 		delete c;
 		delete p;
 		
-		system("nvmc -c out.nvm");
+		system("nvm -c out.nvm -g");
 		//system("rm -rf out.nvm");
 		
 		std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
@@ -44,6 +44,10 @@ int main(int argc, char** argv) {
 		#ifdef DEBUG
 			printf("Compile Time: %.0f ms\n", round(time_span.count()));
 		#endif
+	}
+
+	else if (!strcmp(argv[1], "n")) {
+		// TODO: Native parsing
 	}
 	
 	return 0;
