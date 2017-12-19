@@ -40,11 +40,17 @@ namespace Nitrogen {
 	};
 	template class List<Variable*>;
 	
+	enum FunctionType {
+		F_LOCAL,
+		F_NATIVE,
+	};
+
 	struct Function {
 		const char* name;
 		Type* ret;
 		List<Variable*>* params;
 		List<Variable*>* locals;
+		int type = F_LOCAL;
 		
 		Function(const char* name) {
 			this->name = strdup(name);
@@ -76,6 +82,7 @@ namespace Nitrogen {
 		void setReturnType(Type* ret) { this->ret = ret; }
 		void addParam(Variable* param) { this->params->add(param); }
 		void addLocal(Variable* local) { this->locals->add(local); }
+		void setType(int type) { this->type = type; };
 	};
 
 }

@@ -3,11 +3,11 @@
 namespace Nitrogen {
 
 	Context::Context() {
-		this->funcs = new List<char*>(1);
+		this->ids = new List<char*>(1);
 	}
 	
 	Context::~Context() {
- 		delete this->funcs;
+ 		delete this->ids;
 	}
 
 	void Context::start() {
@@ -28,15 +28,24 @@ namespace Nitrogen {
 					t->setType(VAR);
 				}
 
-				// Function
+				// Function Declaration
 				else if (tokens->get(i-1)->getType() == KEYWORD && tokens->get(i-1)->getData() == FUNC) {
-					funcs->add(names->get(t->getData()));
+					ids->add(names->get(t->getData()));
 					t->setType(ID);
-					t->setData(funcs->getSize() - 1);
+					t->setData(ids->getSize() - 1);
+				}
+
+				// Function Call
+				else if (tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == LEFT_PAR) {
+					t->setType(ID);
 				}
 
 				// Return Variable
 				else if (tokens->get(i-1)->getType() == KEYWORD && tokens->get(i-1)->getData() == RETURN) {
+					t->setType(VAR);
+				}
+
+				else {
 					t->setType(VAR);
 				}
 
@@ -49,7 +58,7 @@ namespace Nitrogen {
 		Compiler* c = new Compiler();
 		c->setTokens(tokens);
 		c->setNames(names);
-		c->setFuncs(funcs);
+		c->setIDs(ids);
 		c->setTypes(types);
 		return c;
 	}

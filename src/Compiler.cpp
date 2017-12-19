@@ -8,6 +8,7 @@ namespace Nitrogen {
 		out = fopen("out.nvm", "w");
 		this->varBuffer = new List<char*>(1);
 		this->gvars = new List<Variable*>(1);
+		this->funcs = new List<Function*>(1);
 	}
 	
 	Compiler::~Compiler() {
@@ -76,13 +77,13 @@ namespace Nitrogen {
 				// Return Variable
 				else if (t->getType() == KEYWORD && t->getData() == RETURN &&
 						RTOKEN(1)->getType() == VAR) {
-					temp = isGlobal(names->get(RTOKEN(1)->getData()));
+					temp = currentFunction->isParam(names->get(RTOKEN(1)->getData()));
 					if (temp != -1) {
-						Variable* v = gvars->get(temp);
-						fprintf(out, VM_RETURN_G_VAR, getStoreSize(v), v->name);
-					} else if ((temp = currentFunction->isParam(names->get(RTOKEN(1)->getData()))) != -1) {
 						Variable* v = currentFunction->params->get(temp);
 						fprintf(out, VM_RETURN_P_VAR, getInstSize(v), currentFunction->getParamOffset(temp) + 8);
+					} else if ((temp = isGlobal(names->get(RTOKEN(1)->getData()))) != -1) {
+						Variable* v = gvars->get(temp);
+						fprintf(out, VM_RETURN_G_VAR, getStoreSize(v), v->name);
 					}
 				}
 
@@ -100,6 +101,13 @@ namespace Nitrogen {
 					fprintf(out, VM_VAR_SET, getStoreSize(v), v->name, RTOKEN(2)->getData());
 				}
 
+				// Function Call
+				else if (t->getType() == ID &&
+						RTOKEN(-1)->getType() != KEYWORD &&
+						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == LEFT_PAR) {
+					parseFunctionCall(t, &i);
+				}
+
 			}
 
 		}
@@ -113,7 +121,7 @@ namespace Nitrogen {
 	}
 
 	Function* Compiler::createFunction(Token* name, int* index) {
-		Function* f = new Function(funcs->get(name->getData()));
+		Function* f = new Function(ids->get(name->getData()));
 		*index += 1;
 
 		Token* t;
@@ -121,6 +129,7 @@ namespace Nitrogen {
 		for (i = *index; i < tokens->getSize(); i++) {
 			t = tokens->get(i);
 
+			// Parameter
 			if (t->getType() == VAR &&
 					RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
 					RTOKEN(2)->getType() == TYPE) {
@@ -130,6 +139,7 @@ namespace Nitrogen {
 				f->addParam(new Variable(name, type));
 			}
 
+			// Return Type
 			else if (RTOKEN(-1)->getType() == SPECIAL && RTOKEN(-1)->getData() == LEFT_BRACK &&
 					t->getType() == TYPE &&
 					RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == RIGHT_BRACK) {
@@ -142,7 +152,133 @@ namespace Nitrogen {
 		}
 
 		*index = i;
+		funcs->add(f);
 		return f;
+	}
+
+	void Compiler::parseFunctionCall(Token* name, int* index) {
+		// Check Name
+		char* fname = names->get(name->getData());
+		Function* f;
+		int n;
+		if ((n = isFunction(fname)) != -1) {
+			f = funcs->get(n);
+		} else {
+			printf("(%d): No such function '%s'\n", name->getLine(), fname);
+			exit(1);
+		}
+
+		// PUSHA
+		fprintf(out, "%s", VM_CALL_HEADER);
+
+		// Set up data
+		int argb = 0;
+		int argc = 0;
+		List<Token*>* args = new List<Token*>(1);
+		*index += 1;
+
+		// Parse Arguments
+
+		Token* t;
+		int i;
+		for (i = *index; i < tokens->getSize(); i++) {
+			t = RTOKEN(0);
+
+			// Variable
+			if (t->getType() == VAR && RTOKEN(1)->getType() == SPECIAL &&
+					(RTOKEN(1)->getData() == COMMA || RTOKEN(1)->getData() == RIGHT_PAR)) {
+				int index;
+				if ((index = isGlobal(names->get(t->getData()))) != -1) {
+					t->setType(GVAR);
+					t->setData(index);
+				} else if ((index = currentFunction->isParam(names->get(t->getData()))) != -1) {
+					t->setType(PVAR);
+					t->setData(index);
+				}
+				args->add(t);
+			}
+
+			// Number
+			else if (t->getType() == NUMBER && RTOKEN(1)->getType() == SPECIAL &&
+					(RTOKEN(1)->getData() == COMMA || RTOKEN(1)->getData() == RIGHT_PAR)) {
+				args->add(t);
+			}
+
+			// End of Call
+			else if (t->getType() == SPECIAL && t->getData() == RIGHT_PAR) {
+				break;
+			}
+		}
+		*index = i;
+
+		// Check for argument count
+		if (args->getSize() < f->params->getSize()) {
+			printf("(%d): Not enough arguments for '%s' (%d < %d)\n", name->getLine(), fname, args->getSize(), f->params->getSize());
+			exit(1);
+		} else if (args->getSize() > f->params->getSize()) {
+			printf("(%d): Too many arguments for '%s' (%d > %d)\n", name->getLine(), fname, args->getSize(), f->params->getSize());
+			exit(1);
+		}
+
+		// Output to NVM
+
+		for (i = args->getSize() - 1; i >= 0; i--) {
+			t = args->get(i);
+			Variable* varg = f->params->get(i);
+
+			switch (t->getType()) {
+				case NUMBER: {
+					fprintf(out, "\t%sconst %d\n", getInstSize(varg), t->getData());
+					argb += varg->type->size;
+					break;
+				}
+
+				case GVAR: {
+					Variable* g = gvars->get(t->getData());
+					if (g->type->size != varg->type->size) {
+						printf("(%d) Incorrect argument size\n", t->getLine());
+						exit(1);
+					}
+					argb += g->type->size;
+					fprintf(out, "\tld%s eax $g_%s\n", getStoreSize(g), g->name);
+					fprintf(out, "\tstore eax\n");
+					break;
+				}
+
+				case PVAR: {
+					Variable* p = currentFunction->params->get(t->getData());
+					if (p->type->size != varg->type->size) {
+						printf("(%d) Incorrect argument size\n", t->getLine());
+						exit(1);
+					}
+					argb += p->type->size;
+					fprintf(out, "\t%sget eax (ebp)+%d\n", getStoreSize(p), currentFunction->getParamOffset(t->getData()));
+					fprintf(out, "\tstore eax\n");
+					break;
+				}
+
+				default: {
+					printf("(%d) Invalid argument AST token %d\n", t->getLine(), t->getType());
+					exit(1);
+				}
+			}
+		}
+
+		// Finish
+		if (f->type == F_LOCAL) {
+			fprintf(out, VM_CALL_END, fname, argb);
+		} else if (f->type == F_NATIVE) {
+			fprintf(out, VM_CALL_NATIVE, fname, argb);
+		}
+	}
+
+	int Compiler::isFunction(char* name) {
+		for (int i = 0; i < funcs->getSize(); i++) {
+			if (!strcmp(name, funcs->get(i)->name)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	int Compiler::isGlobal(char* name) {

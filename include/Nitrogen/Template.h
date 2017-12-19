@@ -40,6 +40,23 @@ R"str(g_%s: d%s %d
 R"str(	st%s $g_%s %d
 )str";
 
+	static const char* VM_CALL_HEADER = 
+R"str(	pusha
+)str";
+
+	static const char* VM_CALL_END = 
+R"str(	call @_%s
+	add esp %d
+	popa
+)str";
+
+	static const char* VM_CALL_NATIVE = 
+R"str(	ncall %s
+	add esp %d
+	popa
+)str";
+
+
 }
 
 #endif // NITROGEN_TEMPLATE_H

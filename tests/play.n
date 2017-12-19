@@ -1,7 +1,15 @@
 x: i32!
-y: i16 = 42
+
+func foo(x: i32)[i32]:
+    return x
+endf
+
+func bar(a: i8, b: i32)[i32]:
+    return b
+endf
 
 func main()[i32]:
+    foo(1209)
     x = 42
-    return x
+    bar(2, x)
 endf

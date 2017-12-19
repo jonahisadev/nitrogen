@@ -16,7 +16,7 @@ namespace Nitrogen {
 	private:
 		List<Token*>* tokens;
 		List<char*>* names;
-		List<char*>* funcs;
+		List<char*>* ids;
 		List<Type*>* types;
 		
 	public:
