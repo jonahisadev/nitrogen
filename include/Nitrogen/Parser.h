@@ -9,6 +9,7 @@
 #include <Nitrogen/Token.h>
 #include <Nitrogen/Util.h>
 #include <Nitrogen/Context.h>
+#include <Nitrogen/LinkedList.h>
 
 namespace Nitrogen {
 
@@ -17,7 +18,9 @@ namespace Nitrogen {
 		char* source;
 		int length;
 		
-		List<Token*>* tokens;
+		// List<Token*>* tokens;
+		LinkedList<Token*>* tokens;
+
 		List<char*>* names;
 		List<Type*>* types;
 		
@@ -32,7 +35,7 @@ namespace Nitrogen {
 		
 		Context* createContext();
 		
-		int getListSize() const { return tokens->getSize(); }
+		// int getListSize() const { return tokens->getSize(); }
 	};
 
 }

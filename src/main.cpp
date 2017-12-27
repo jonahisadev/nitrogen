@@ -8,7 +8,12 @@
 #include <Nitrogen/Util.h>
 #include <Nitrogen/Parser.h>
 
+#include <Nitrogen/LinkedList.h>
+
 using namespace Nitrogen;
+
+#define CURRENT() current->data
+#define REL(x) list->getRelative(x)->data
 
 int main(int argc, char** argv) {
 	if (argc < 3) {
@@ -48,6 +53,33 @@ int main(int argc, char** argv) {
 
 	else if (!strcmp(argv[1], "n")) {
 		// TODO: Native parsing
+	}
+
+	else if (!strcmp(argv[1], "ll")) {
+		LinkedList<Token*>* list = new LinkedList<Token*>(nullptr);
+
+		list->add(new Token(NUMBER, 40, 50));
+		list->add(new Token(NUMBER, 2, 30));
+
+		LinkData<Token*>* current = list->get(0);
+
+		current->insertAfter(new LinkData<Token*>(nullptr, nullptr, new Token(OP, PLUS, 0)));
+
+		while (current->hasChild()) {
+			if (CURRENT()->getType() == OP && CURRENT()->getData() == PLUS &&
+					REL(-1)->getType() == NUMBER && REL(1)->getType() == NUMBER) {
+				int x = REL(-1)->getData();
+				int y = REL(1)->getData();
+				printf("%d + %d = %d\n", x, y, x + y);
+			}
+
+			current = list->child(current);
+		}
+
+		// LinkData<Token*>* ld = list->get(1);
+		// LinkData<Token*>* ld2 = list->getRelative(1);
+		// Token* t = ld2->data;
+		// printf("Type: %d, Data: %d, Line: %d\n", t->getType(), t->getData(), t->getLine());
 	}
 	
 	return 0;

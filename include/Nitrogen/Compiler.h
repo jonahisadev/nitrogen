@@ -16,7 +16,7 @@ namespace Nitrogen {
 	private:
 		FILE* out;
 		
-		List<Token*>* tokens;
+		LinkedList<Token*>* tokens;
 		List<char*>* names;
 		List<char*>* ids;
 		List<Type*>* types;
@@ -34,10 +34,10 @@ namespace Nitrogen {
 		void start();
 		void getNatives();
 
-		Function* createFunction(Token* name, int* index);
-		void parseFunctionCall(Token* name, int* index);
+		Function* createFunction(LinkData<Token*>* func);
+		void parseFunctionCall(LinkData<Token*>* func);
 
-		void setTokens(List<Token*>* tokens) { this->tokens = tokens; };
+		void setTokens(LinkedList<Token*>* tokens) { this->tokens = tokens; };
 		void setNames(List<char*>* names) { this->names = names; };
 		void setIDs(List<char*>* ids) { this->ids = ids; };
 		void setTypes(List<Type*>* types) { this->types = types; }

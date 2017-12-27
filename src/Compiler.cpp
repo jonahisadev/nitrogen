@@ -1,6 +1,7 @@
 #include <Nitrogen/Compiler.h>
 
-#define RTOKEN(x) tokens->get(i+x)
+// #define RTOKEN(x) tokens->get(i+x)
+#define RTOKEN(x) tokens->getRelative(x)->data
 
 namespace Nitrogen {
 
@@ -21,8 +22,9 @@ namespace Nitrogen {
 		
 		Token* t;
 		
-		for (int i = 0; i < tokens->getSize(); i++) {
-			t = tokens->get(i);
+		LinkData<Token*>* current = tokens->get(0);
+		while (current != nullptr) {
+			t = current->data;
 
 			if (currentFunction == nullptr) {
 
@@ -45,7 +47,7 @@ namespace Nitrogen {
 				else if (t->getType() == VAR && 
 						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
 						RTOKEN(2)->getType() == TYPE &&
-						RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == EQUALS &&
+						RTOKEN(3)->getType() == OP && RTOKEN(3)->getData() == EQUALS &&
 						RTOKEN(4)->getType() == NUMBER) {
 					Variable* v = new Variable(names->get(t->getData()), types->get(RTOKEN(2)->getData()));
 					gvars->add(v);
@@ -60,7 +62,7 @@ namespace Nitrogen {
 				// Function
 				else if (t->getType() == KEYWORD && t->getData() == FUNC &&
 						RTOKEN(1)->getType() == ID) {
-					Function* f = createFunction(RTOKEN(1), &i);
+					Function* f = createFunction(current);
 					currentFunction = f;
 					fprintf(out, VM_LABEL, f->name);
 				}
@@ -95,7 +97,7 @@ namespace Nitrogen {
 
 				// Set Global Variable
 				else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
-						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == EQUALS &&
+						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
 						RTOKEN(2)->getType() == NUMBER) {
 					Variable* v = gvars->get(temp);
 					fprintf(out, VM_VAR_SET, getStoreSize(v), v->name, RTOKEN(2)->getData());
@@ -105,11 +107,12 @@ namespace Nitrogen {
 				else if (t->getType() == ID &&
 						RTOKEN(-1)->getType() != KEYWORD &&
 						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == LEFT_PAR) {
-					parseFunctionCall(t, &i);
+					parseFunctionCall(current);
 				}
 
 			}
 
+			current = tokens->child(current);
 		}
 
 		fprintf(out, "%s\n", "#section DATA");
@@ -120,14 +123,13 @@ namespace Nitrogen {
 		fclose(out);
 	}
 
-	Function* Compiler::createFunction(Token* name, int* index) {
-		Function* f = new Function(ids->get(name->getData()));
-		*index += 1;
+	Function* Compiler::createFunction(LinkData<Token*>* func) {
+		Function* f = new Function(ids->get(func->data->getData()));
 
 		Token* t;
-		int i;
-		for (i = *index; i < tokens->getSize(); i++) {
-			t = tokens->get(i);
+		LinkData<Token*>* current = func->child;
+		while (current != nullptr) {
+			t = current->data;
 
 			// Parameter
 			if (t->getType() == VAR &&
@@ -146,25 +148,25 @@ namespace Nitrogen {
 				Type* type = types->get(t->getData());
 				// printf("RET: %s\n", type->name);
 				f->setReturnType(type);
-				i += 2;
 				break;
 			}
+
+			current = tokens->child(current);
 		}
 
-		*index = i;
 		funcs->add(f);
 		return f;
 	}
 
-	void Compiler::parseFunctionCall(Token* name, int* index) {
+	void Compiler::parseFunctionCall(LinkData<Token*>* func) {
 		// Check Name
-		char* fname = names->get(name->getData());
+		char* fname = names->get(func->data->getData());
 		Function* f;
 		int n;
 		if ((n = isFunction(fname)) != -1) {
 			f = funcs->get(n);
 		} else {
-			printf("(%d): No such function '%s'\n", name->getLine(), fname);
+			printf("(%d): No such function '%s'\n", func->data->getLine(), fname);
 			exit(1);
 		}
 
@@ -175,14 +177,13 @@ namespace Nitrogen {
 		int argb = 0;
 		int argc = 0;
 		List<Token*>* args = new List<Token*>(1);
-		*index += 1;
 
 		// Parse Arguments
 
 		Token* t;
-		int i;
-		for (i = *index; i < tokens->getSize(); i++) {
-			t = RTOKEN(0);
+		LinkData<Token*>* current = func->child;
+		while (current != nullptr) {
+			t = current->data;
 
 			// Variable
 			if (t->getType() == VAR && RTOKEN(1)->getType() == SPECIAL &&
@@ -208,21 +209,22 @@ namespace Nitrogen {
 			else if (t->getType() == SPECIAL && t->getData() == RIGHT_PAR) {
 				break;
 			}
+
+			current = tokens->child(current);
 		}
-		*index = i;
 
 		// Check for argument count
 		if (args->getSize() < f->params->getSize()) {
-			printf("(%d): Not enough arguments for '%s' (%d < %d)\n", name->getLine(), fname, args->getSize(), f->params->getSize());
+			printf("(%d): Not enough arguments for '%s' (%d < %d)\n", func->data->getLine(), fname, args->getSize(), f->params->getSize());
 			exit(1);
 		} else if (args->getSize() > f->params->getSize()) {
-			printf("(%d): Too many arguments for '%s' (%d > %d)\n", name->getLine(), fname, args->getSize(), f->params->getSize());
+			printf("(%d): Too many arguments for '%s' (%d > %d)\n", func->data->getLine(), fname, args->getSize(), f->params->getSize());
 			exit(1);
 		}
 
 		// Output to NVM
 
-		for (i = args->getSize() - 1; i >= 0; i--) {
+		for (int i = args->getSize() - 1; i >= 0; i--) {
 			t = args->get(i);
 			Variable* varg = f->params->get(i);
 

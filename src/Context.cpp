@@ -1,5 +1,7 @@
 #include <Nitrogen/Context.h>
 
+#define REL(x) tokens->getRelative(x)->data
+
 namespace Nitrogen {
 
 	Context::Context() {
@@ -13,43 +15,47 @@ namespace Nitrogen {
 	void Context::start() {
 		Token* t;
 		
-		for (int i = 0; i < tokens->getSize(); i++) {
-			t = tokens->get(i);
+		LinkData<Token*>* current = tokens->get(0);
+		while (current != nullptr) {
+			t = current->data;
 
 			if (t->getType() == NAME) {
 
 				// Variable declaration
-				if (tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == COLON) {
+				if (REL(1)->getType() == SPECIAL && REL(1)->getData() == COLON) {
 					t->setType(VAR);
 				}
 
 				// Variable setting
-				else if (tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == EQUALS) {
+				else if (REL(1)->getType() == OP && REL(1)->getData() == EQUALS) {
 					t->setType(VAR);
 				}
 
 				// Function Declaration
-				else if (tokens->get(i-1)->getType() == KEYWORD && tokens->get(i-1)->getData() == FUNC) {
+				else if (REL(-1)->getType() == KEYWORD && REL(-1)->getData() == FUNC) {
 					ids->add(names->get(t->getData()));
 					t->setType(ID);
 					t->setData(ids->getSize() - 1);
 				}
 
 				// Function Call
-				else if (tokens->get(i+1)->getType() == SPECIAL && tokens->get(i+1)->getData() == LEFT_PAR) {
+				else if (REL(1)->getType() == SPECIAL && REL(1)->getData() == LEFT_PAR) {
 					t->setType(ID);
 				}
 
 				// Return Variable
-				else if (tokens->get(i-1)->getType() == KEYWORD && tokens->get(i-1)->getData() == RETURN) {
+				else if (REL(-1)->getType() == KEYWORD && REL(-1)->getData() == RETURN) {
 					t->setType(VAR);
 				}
 
+				// Hack
 				else {
 					t->setType(VAR);
 				}
 
 			}
+
+			current = tokens->child(current);
 		}
 	}
 	

@@ -6,7 +6,7 @@ namespace Nitrogen {
 		this->source = source;
 		this->length = length;
 		
-		this->tokens = new List<Token*>(1);
+		this->tokens = new LinkedList<Token*>(nullptr);
 		this->names = new List<char*>(1);
 		
 		this->types = new List<Type*>(1);
@@ -72,7 +72,12 @@ namespace Nitrogen {
 					break;
 				}
 				case '=': {
-					tokens->add(new Token(SPECIAL, EQUALS, line));
+					tokens->add(new Token(OP, EQUALS, line));
+					//createExpression(source, i, '\n');
+					break;
+				}
+				case '+': {
+					tokens->add(new Token(OP, PLUS, line));
 					break;
 				}
 				case ',': {
@@ -198,6 +203,8 @@ namespace Nitrogen {
 			case '!':
 				return true;
 			case '.':
+				return true;
+			case '+':
 				return true;
 			default:
 				return false;

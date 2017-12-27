@@ -14,7 +14,7 @@ namespace Nitrogen {
 
 	class Context {
 	private:
-		List<Token*>* tokens;
+		LinkedList<Token*>* tokens;
 		List<char*>* names;
 		List<char*>* ids;
 		List<Type*>* types;
@@ -27,7 +27,7 @@ namespace Nitrogen {
 		
 		Compiler* createCompiler();
 		
-		void setTokens(List<Token*>* tokens) { this->tokens = tokens; };
+		void setTokens(LinkedList<Token*>* tokens) { this->tokens = tokens; };
 		void setNames(List<char*>* names) { this->names = names; };
 		void setTypes(List<Type*>* types) { this->types = types; }
 	};

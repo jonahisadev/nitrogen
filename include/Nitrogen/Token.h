@@ -2,6 +2,7 @@
 #define NITROGEN_TOKEN_H
 
 #include <Nitrogen/List.h>
+#include <Nitrogen/LinkedList.h>
 
 namespace Nitrogen {
 
@@ -9,6 +10,8 @@ namespace Nitrogen {
 		KEYWORD,
 		NUMBER,
 		SPECIAL,
+		OP,
+		EXPR,
 		
 		NAME,
 		ID,
@@ -33,14 +36,19 @@ namespace Nitrogen {
 		LEFT_BRACK,
 		RIGHT_BRACK,
 		COLON,
-		EQUALS,
 		COMMA,
 		EXCLAIM,
 		DOT,
 	};
 
+	enum TokenOperators {
+		EQUALS,
+		PLUS,
+	};
+
 	class Token;
 	template class List<Token*>;
+	template class LinkedList<Token*>;
 
 	class Token {
 	private:
