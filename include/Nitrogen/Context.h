@@ -18,12 +18,14 @@ namespace Nitrogen {
 		List<char*>* names;
 		List<char*>* ids;
 		List<Type*>* types;
+		List<Expression*>* exprs;
 		
 	public:
 		Context();
 		~Context();
 		
 		void start();
+		void createExpression(LinkData<Token*>* start);
 		
 		Compiler* createCompiler();
 		

@@ -9,6 +9,7 @@
 #include <Nitrogen/List.h>
 #include <Nitrogen/Template.h>
 #include <Nitrogen/Type.h>
+#include <Nitrogen/Expression.h>
 
 namespace Nitrogen {
 
@@ -22,6 +23,7 @@ namespace Nitrogen {
 		List<Type*>* types;
 		List<Variable*>* gvars;
 		List<Function*>* funcs;
+		List<Expression*>* exprs;
 		
 		List<char*>* varBuffer;
 
@@ -41,6 +43,7 @@ namespace Nitrogen {
 		void setNames(List<char*>* names) { this->names = names; };
 		void setIDs(List<char*>* ids) { this->ids = ids; };
 		void setTypes(List<Type*>* types) { this->types = types; }
+		void setExpressions(List<Expression*>* exprs) { this->exprs = exprs; }
 		
 		const char* getStoreSize(Variable* var);
 		const char* getInstSize(Variable* v);

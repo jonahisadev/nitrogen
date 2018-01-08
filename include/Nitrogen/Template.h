@@ -40,6 +40,10 @@ R"str(g_%s: d%s %d
 R"str(	st%s $g_%s %d
 )str";
 
+	static const char* VM_VAR_SET_E =
+R"str(	st%s $g_%s %s
+)str";
+
 	static const char* VM_CALL_HEADER = 
 R"str(	pusha
 )str";

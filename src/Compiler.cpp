@@ -26,6 +26,20 @@ namespace Nitrogen {
 		while (current != nullptr) {
 			t = current->data;
 
+			int temp;
+
+			// Set Global Variable
+			if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+					RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
+					RTOKEN(2)->getType() == EXPR) {
+				Variable* v = gvars->get(temp);
+				Expression* e = exprs->get(RTOKEN(2)->getData());
+				e->evaluate(out);
+				fprintf(out, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
+				// TODO: Have evaluator keep track of registers
+				goto end;
+			}
+
 			if (currentFunction == nullptr) {
 
 				// Global Variable Declaration
@@ -68,7 +82,6 @@ namespace Nitrogen {
 				}
 
 			} else {
-				int temp;
 
 				// End Function
 				if (t->getType() == KEYWORD && t->getData() == ENDF) {
@@ -112,6 +125,7 @@ namespace Nitrogen {
 
 			}
 
+			end:
 			current = tokens->child(current);
 		}
 
