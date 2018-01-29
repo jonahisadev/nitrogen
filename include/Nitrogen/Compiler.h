@@ -10,6 +10,7 @@
 #include <Nitrogen/Template.h>
 #include <Nitrogen/Type.h>
 #include <Nitrogen/Expression.h>
+#include <Nitrogen/Struct.h>
 
 namespace Nitrogen {
 
@@ -24,6 +25,7 @@ namespace Nitrogen {
 		List<Variable*>* gvars;
 		List<Function*>* funcs;
 		List<Expression*>* exprs;
+		List<Struct*>* structs;
 		
 		List<char*>* varBuffer;
 
@@ -38,6 +40,7 @@ namespace Nitrogen {
 
 		Function* createFunction(LinkData<Token*>* func);
 		void parseFunctionCall(LinkData<Token*>* func);
+		Struct* createStruct(LinkData<Token*>* s, int* offset);
 
 		void setTokens(LinkedList<Token*>* tokens) { this->tokens = tokens; };
 		void setNames(List<char*>* names) { this->names = names; };

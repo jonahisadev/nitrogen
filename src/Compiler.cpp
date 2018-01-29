@@ -10,11 +10,13 @@ namespace Nitrogen {
 		this->varBuffer = new List<char*>(1);
 		this->gvars = new List<Variable*>(1);
 		this->funcs = new List<Function*>(1);
+		this->structs = new List<Struct*>(1);
 	}
 	
 	Compiler::~Compiler() {
 		delete this->varBuffer;
 		delete this->gvars;
+		delete this->structs;
 	}
 	
 	void Compiler::start() {
@@ -25,29 +27,33 @@ namespace Nitrogen {
 		LinkData<Token*>* current = tokens->get(0);
 		while (current != nullptr) {
 			t = current->data;
-
 			int temp;
 
-			// Set Global Variable
-			if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
-					RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
-					RTOKEN(2)->getType() == EXPR) {
-				Variable* v = gvars->get(temp);
-				Expression* e = exprs->get(RTOKEN(2)->getData());
-				e->evaluate(out);
-				fprintf(out, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
-				// TODO: Have evaluator keep track of registers
-				goto end;
-			}
+			// printf("Token: {type=%d, data=%d, line=%d}\n", t->getType(), t->getData(), t->getLine());
 
 			if (currentFunction == nullptr) {
 
+				// printf("Out of function\n");
+
+				// Struct
+				if (t->getType() == KEYWORD && t->getData() == STRUCT &&
+						RTOKEN(1)->getType() == ID &&
+						RTOKEN(2)->getType() == SPECIAL && RTOKEN(2)->getData() == COLON) {
+					current = tokens->child(current);
+					int offset = 0;
+					Struct* s = createStruct(current, &offset);
+					structs->add(s);
+					for (int i = 0; i < offset + 1; i++)
+						current = tokens->child(current);
+				}
+
 				// Global Variable Declaration
-				if (t->getType() == VAR && 
+				else if (t->getType() == VAR && 
 						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
 						RTOKEN(2)->getType() == TYPE &&
 						RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == EXCLAIM) {
 					Variable* v = new Variable(names->get(t->getData()), types->get(RTOKEN(2)->getData()));
+					// printf("var: {name=\"%s\", type=\"%s\"}\n", v->name, v->type->name);
 					gvars->add(v);
 					//t->setType(GVAR);
 
@@ -57,12 +63,14 @@ namespace Nitrogen {
 					delete[] buf;
 				}
 
+				// TODO: FIX
 				// Global Variable Declaration and Initialization
 				else if (t->getType() == VAR && 
 						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
 						RTOKEN(2)->getType() == TYPE &&
 						RTOKEN(3)->getType() == OP && RTOKEN(3)->getData() == EQUALS &&
-						RTOKEN(4)->getType() == NUMBER) {
+						RTOKEN(4)->getType() == EXPR) {
+					error("(%d): Global declaration and initialization is not supported yet\n", t->getLine());
 					Variable* v = new Variable(names->get(t->getData()), types->get(RTOKEN(2)->getData()));
 					gvars->add(v);
 					//t->setType(GVAR);
@@ -76,12 +84,27 @@ namespace Nitrogen {
 				// Function
 				else if (t->getType() == KEYWORD && t->getData() == FUNC &&
 						RTOKEN(1)->getType() == ID) {
+					current = tokens->child(current);
 					Function* f = createFunction(current);
 					currentFunction = f;
 					fprintf(out, VM_LABEL, f->name);
 				}
 
 			} else {
+
+				// printf("Inside of function\n");
+
+				// Set Global Variable
+				if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
+						RTOKEN(2)->getType() == EXPR) {
+					Variable* v = gvars->get(temp);
+					Expression* e = exprs->get(RTOKEN(2)->getData());
+					e->evaluate(out);
+					fprintf(out, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
+					// TODO: Have evaluator keep track of registers
+					goto end;
+				}
 
 				// End Function
 				if (t->getType() == KEYWORD && t->getData() == ENDF) {
@@ -108,6 +131,7 @@ namespace Nitrogen {
 					fprintf(out, VM_RETURN_CONST, RTOKEN(1)->getData());
 				}
 
+				/*
 				// Set Global Variable
 				else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
 						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
@@ -115,6 +139,7 @@ namespace Nitrogen {
 					Variable* v = gvars->get(temp);
 					fprintf(out, VM_VAR_SET, getStoreSize(v), v->name, RTOKEN(2)->getData());
 				}
+				*/
 
 				// Function Call
 				else if (t->getType() == ID &&
@@ -172,6 +197,43 @@ namespace Nitrogen {
 		return f;
 	}
 
+	Struct* Compiler::createStruct(LinkData<Token*>* start, int* offset) {
+		Struct* s = new Struct(ids->get(start->data->getData()));
+		// printf("Starting struct parse: %s\n", s->name);
+
+		Token* t;
+		LinkData<Token*>* current = tokens->child(start);
+		int size = 0;
+		while (current != nullptr) {
+			t = current->data;
+
+			// Variable
+			if (t->getType() == VAR &&
+					RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
+					RTOKEN(2)->getType() == TYPE &&
+					RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == EXCLAIM) {
+				char* name = names->get(t->getData());
+				Type* type = types->get(RTOKEN(2)->getData());
+				Variable* v = new Variable(name, type);
+				s->addVariable(v);
+				// printf("\tvar: {name=\"%s\", type=\"%s\"}\n", v->name, v->type->name);
+				size += type->size;
+			}
+
+			// End Struct
+			else if (t->getType() == KEYWORD && t->getData() == END) {
+				break;
+			}
+
+			current = tokens->child(current);
+			*offset += 1;
+		}
+
+		s->size = size;
+		// printf("Done parsing struct: {name=\"%s\", size=%d} (%d)\n", s->name, s->size, *offset);
+		return s;
+	}
+
 	void Compiler::parseFunctionCall(LinkData<Token*>* func) {
 		// Check Name
 		char* fname = names->get(func->data->getData());
@@ -180,7 +242,7 @@ namespace Nitrogen {
 		if ((n = isFunction(fname)) != -1) {
 			f = funcs->get(n);
 		} else {
-			printf("(%d): No such function '%s'\n", func->data->getLine(), fname);
+			error("(%d): No such function '%s'\n", func->data->getLine(), fname);
 			exit(1);
 		}
 
@@ -229,10 +291,10 @@ namespace Nitrogen {
 
 		// Check for argument count
 		if (args->getSize() < f->params->getSize()) {
-			printf("(%d): Not enough arguments for '%s' (%d < %d)\n", func->data->getLine(), fname, args->getSize(), f->params->getSize());
+			error("(%d): Not enough arguments for '%s' (%d < %d)\n", func->data->getLine(), fname, args->getSize(), f->params->getSize());
 			exit(1);
 		} else if (args->getSize() > f->params->getSize()) {
-			printf("(%d): Too many arguments for '%s' (%d > %d)\n", func->data->getLine(), fname, args->getSize(), f->params->getSize());
+			error("(%d): Too many arguments for '%s' (%d > %d)\n", func->data->getLine(), fname, args->getSize(), f->params->getSize());
 			exit(1);
 		}
 
@@ -252,7 +314,7 @@ namespace Nitrogen {
 				case GVAR: {
 					Variable* g = gvars->get(t->getData());
 					if (g->type->size != varg->type->size) {
-						printf("(%d) Incorrect argument size\n", t->getLine());
+						error("(%d): Incorrect argument size\n", t->getLine());
 						exit(1);
 					}
 					argb += g->type->size;
@@ -264,7 +326,7 @@ namespace Nitrogen {
 				case PVAR: {
 					Variable* p = currentFunction->params->get(t->getData());
 					if (p->type->size != varg->type->size) {
-						printf("(%d) Incorrect argument size\n", t->getLine());
+						error("(%d): Incorrect argument size\n", t->getLine());
 						exit(1);
 					}
 					argb += p->type->size;
@@ -274,7 +336,7 @@ namespace Nitrogen {
 				}
 
 				default: {
-					printf("(%d) Invalid argument AST token %d\n", t->getLine(), t->getType());
+					error("(%d): Invalid argument AST token %d\n", t->getLine(), t->getType());
 					exit(1);
 				}
 			}

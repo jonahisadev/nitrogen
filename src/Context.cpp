@@ -21,20 +21,33 @@ namespace Nitrogen {
 			t = current->data;
 
 			if (t->getType() == OP && t->getData() == EQUALS) {
-				createExpression(current->child);
+				current = tokens->child(current);
+				createExpression(current);
 			}
 
-			if (t->getType() == NAME) {
+			else if (t->getType() == NAME) {
 
 				// Variable declaration
-				if (REL(1)->getType() == SPECIAL && REL(1)->getData() == COLON) {
+				if (REL(1)->getType() == SPECIAL && REL(1)->getData() == COLON &&
+						REL(2)->getType() == TYPE) {
 					t->setType(VAR);
 				}
 
+				// Structure
+				else if (REL(-1)->getType() == KEYWORD && REL(-1)->getData() == STRUCT &&
+						REL(1)->getType() == SPECIAL && REL(1)->getData() == COLON) {
+					// printf("struct\n");
+					ids->add(names->get(t->getData()));
+					t->setType(ID);
+					t->setData(ids->getSize() - 1);
+				}
+
+				/*
 				// Variable setting
 				else if (REL(1)->getType() == OP && REL(1)->getData() == EQUALS) {
 					t->setType(VAR);
 				}
+				*/
 
 				// Function Declaration
 				else if (REL(-1)->getType() == KEYWORD && REL(-1)->getData() == FUNC) {
@@ -61,6 +74,7 @@ namespace Nitrogen {
 			}
 
 			current = tokens->child(current);
+			// printf("new current: %d, %d\n", current->data->getType(), current->data->getData());
 		}
 	}
 	
@@ -87,13 +101,15 @@ namespace Nitrogen {
 		}
 		
 		// Create expression token
-		start->insertBefore(new LinkData<Token*>(nullptr, nullptr, new Token(EXPR, exprs->getSize(), line)));
+		LinkData<Token*>* exprToken = new LinkData<Token*>(nullptr, nullptr, new Token(EXPR, exprs->getSize(), line));
+		start->insertBefore(exprToken);
 		exprs->add(e);
-		LinkData<Token*>* exprToken = start->child;
 
 		// Link the two important tokens
 		exprToken->child = current;
 		current->parent = exprToken;
+
+		// printf("end of expression\n");
 
 		// TODO: Free memory from other tokens that aren't in use anymore
 	}

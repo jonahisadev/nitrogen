@@ -17,7 +17,7 @@ using namespace Nitrogen;
 
 int main(int argc, char** argv) {
 	if (argc < 3) {
-		printf("Too few arguments!\n");
+		error("Too few arguments!\n");
 		exit(1);
 	}
 	
@@ -45,9 +45,9 @@ int main(int argc, char** argv) {
 		
 		std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double, std::milli> time_span = t2 - t1;
-		
+
 		#ifdef DEBUG
-			printf("Compile Time: %.0f ms\n", round(time_span.count()));
+			printf("\033[1;32mCompile Time: %.0f ms\033[0m\n", round(time_span.count()));
 		#endif
 	}
 

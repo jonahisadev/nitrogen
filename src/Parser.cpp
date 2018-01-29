@@ -14,7 +14,7 @@ namespace Nitrogen {
 		types->add(new Type("i16", 2));
 		types->add(new Type("i8", 1));
 		types->add(new Type("void", 0));
-		types->add(new Type("string", -1));
+		types->add(new Type("string", 4));
 	}
 	
 	Parser::~Parser() {
@@ -73,11 +73,14 @@ namespace Nitrogen {
 				}
 				case '=': {
 					tokens->add(new Token(OP, EQUALS, line));
-					//createExpression(source, i, '\n');
 					break;
 				}
 				case '+': {
 					tokens->add(new Token(OP, PLUS, line));
+					break;
+				}
+				case '-': {
+					tokens->add(new Token(OP, MINUS, line));
 					break;
 				}
 				case ',': {
@@ -99,7 +102,7 @@ namespace Nitrogen {
 					goto end;
 				}
 				default: {
-					printf("ERR: (%d) Invalid special character '%c'\n", line, source[i]);
+					error("(%d): Invalid special character '%c'\n", line, source[i]);
 					exit(1);
 				}
 			}
@@ -168,6 +171,10 @@ namespace Nitrogen {
 			return TokenKeyword::ENDF;
 		else if (!strcmp(str, "native"))
 			return TokenKeyword::NATIVE;
+		else if (!strcmp(str, "struct"))
+			return TokenKeyword::STRUCT;
+		else if (!strcmp(str, "end"))
+			return TokenKeyword::END;
 		else
 			return -1;
 	}
@@ -205,6 +212,8 @@ namespace Nitrogen {
 			case '.':
 				return true;
 			case '+':
+				return true;
+			case '-':
 				return true;
 			default:
 				return false;

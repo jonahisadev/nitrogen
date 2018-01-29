@@ -1,6 +1,12 @@
 x: i32!
 
+struct Color:
+    r: i32!
+    g: i32!
+    b: i32!
+end
+
 func main()[i32]:
-    x = 40 + 2
+    x = 27 + 13 - 5
     return x
 endf

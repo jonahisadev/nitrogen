@@ -2,6 +2,7 @@
 #define NITROGEN_EXPRESSION_H
 
 #include <Nitrogen/Token.h>
+#include <Nitrogen/Util.h>
 
 #include <cstdio>
 
@@ -27,6 +28,15 @@ namespace Nitrogen {
 				this->right = en;
 			}
 		}
+
+		int childCount() {
+			if (!left)
+				return 0;
+			else if (!right)
+				return 1;
+			else
+				return 2;
+		}
 	};
 
 	class Expression {
@@ -43,6 +53,7 @@ namespace Nitrogen {
 
 		void evaluate(FILE* out);
 		const char* getOpName(int data);
+		ExprNode* getNumber(ExprNode* a, ExprNode* b);
 		ExprNode* getRoot() const { return root; }
 	};
 

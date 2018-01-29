@@ -5,7 +5,7 @@ namespace Nitrogen {
 	char* Util::readFile(const char* path, int* length) {
 		FILE* file = fopen(path, "r");
 		if (!file) {
-			printf("ERR: Could not read file '%s'\n", path);
+			error("Could not read file '%s'\n", path);
 			exit(1);
 		}
 		

@@ -28,6 +28,8 @@ namespace Nitrogen {
 		RETURN,
 		ENDF,
 		NATIVE,
+		STRUCT,
+		END,
 	};
 	
 	enum TokenSpecial {
@@ -44,6 +46,7 @@ namespace Nitrogen {
 	enum TokenOperators {
 		EQUALS,
 		PLUS,
+		MINUS,
 	};
 
 	class Token;
