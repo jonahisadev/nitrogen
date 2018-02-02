@@ -8,6 +8,7 @@ namespace Nitrogen {
 	Compiler::Compiler() {
 		out = fopen("out.nvm", "w");
 		this->varBuffer = new List<char*>(1);
+		this->initBuffer = new List<char*>(1);
 		this->gvars = new List<Variable*>(1);
 		this->funcs = new List<Function*>(1);
 		this->structs = new List<Struct*>(1);
@@ -70,12 +71,23 @@ namespace Nitrogen {
 						RTOKEN(2)->getType() == TYPE &&
 						RTOKEN(3)->getType() == OP && RTOKEN(3)->getData() == EQUALS &&
 						RTOKEN(4)->getType() == EXPR) {
-					error("(%d): Global declaration and initialization is not supported yet\n", t->getLine());
+					// error("(%d): Global declaration and initialization is not supported yet\n", t->getLine());
 					Variable* v = new Variable(names->get(t->getData()), types->get(RTOKEN(2)->getData()));
 					gvars->add(v);
 					//t->setType(GVAR);
 
+					// Evaluate expression
+					Expression* e = exprs->get(RTOKEN(4)->getData());
+					List<char*>* lines = e->evaluate(out);
+					for (int i = 0; i < lines->getSize(); i++)
+						this->initBuffer->add(lines->get(i));
 					char* buf = new char[256];
+					sprintf(buf, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
+					this->initBuffer->add(strdup(buf));
+					delete[] buf;
+
+					// Save variable declaration in data space
+					buf = new char[256];
 					sprintf(buf, VM_VAR_DEC_AND_INIT, v->name, getStoreSize(v), RTOKEN(4)->getData());
 					this->varBuffer->add(strdup(buf));
 					delete[] buf;
@@ -100,7 +112,9 @@ namespace Nitrogen {
 						RTOKEN(2)->getType() == EXPR) {
 					Variable* v = gvars->get(temp);
 					Expression* e = exprs->get(RTOKEN(2)->getData());
-					e->evaluate(out);
+					List<char*>* lines = e->evaluate(out);
+					for (int i = 0; i < lines->getSize(); i++)
+						fprintf(out, "%s", lines->get(i));
 					fprintf(out, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
 					// TODO: Have evaluator keep track of registers
 					goto end;
@@ -154,10 +168,20 @@ namespace Nitrogen {
 			current = tokens->child(current);
 		}
 
+		// Initializing Globals
+		fprintf(out, "%s", "start:\n");
+		for (int i = 0; i < initBuffer->getSize(); i++) {
+			fprintf(out, "%s", initBuffer->get(i));
+		}
+		fprintf(out, "%s", VM_START_END);
+
+		// Globals
 		fprintf(out, "%s\n", "#section DATA");
 		for (int i = 0; i < varBuffer->getSize(); i++) {
 			fprintf(out, "%s", varBuffer->get(i));
 		}
+
+		// Ending File
 		fprintf(out, "%s", "\n");
 		fclose(out);
 	}
@@ -230,6 +254,7 @@ namespace Nitrogen {
 		}
 
 		s->size = size;
+		this->types->add(new Type(s->name, s->size));
 		// printf("Done parsing struct: {name=\"%s\", size=%d} (%d)\n", s->name, s->size, *offset);
 		return s;
 	}

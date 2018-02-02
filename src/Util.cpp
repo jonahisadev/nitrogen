@@ -34,4 +34,15 @@ namespace Nitrogen {
 		return (int)strtol(str, (char**)nullptr, base);
 	}
 
+	char* Util::createTempBuffer() {
+		char* buf = new char[TEMP_BUF_SIZE];
+		clearTempBuffer(buf);
+		return buf;
+	}
+
+	void Util::clearTempBuffer(char* buf) {
+		for (int i = 0; i < TEMP_BUF_SIZE; i++)
+			buf[i] = '\0';
+	}
+
 }

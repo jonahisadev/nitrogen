@@ -28,6 +28,7 @@ namespace Nitrogen {
 		List<Struct*>* structs;
 		
 		List<char*>* varBuffer;
+		List<char*>* initBuffer;
 
 		Function* currentFunction = nullptr;
 		

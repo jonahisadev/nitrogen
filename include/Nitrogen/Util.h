@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#define TEMP_BUF_SIZE 256
+
 #define error(...) fprintf(stderr, "\033[1;31m"); fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\033[0m"); exit(1);
 
 namespace Nitrogen {
@@ -17,6 +19,10 @@ namespace Nitrogen {
 		// Numbers
 		static bool isNumber(const char* str);
 		static int toNum(const char* str, int base);
+
+		// Buffers
+		static char* createTempBuffer();
+		static void clearTempBuffer(char* buf);
 	};
 
 }

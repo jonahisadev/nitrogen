@@ -3,6 +3,7 @@
 
 #include <Nitrogen/Token.h>
 #include <Nitrogen/Util.h>
+#include <Nitrogen/List.h>
 
 #include <cstdio>
 
@@ -51,7 +52,7 @@ namespace Nitrogen {
 		void addOp(int data);
 		void addNumber(int data);
 
-		void evaluate(FILE* out);
+		List<char*>* evaluate(FILE* out);
 		const char* getOpName(int data);
 		ExprNode* getNumber(ExprNode* a, ExprNode* b);
 		ExprNode* getRoot() const { return root; }

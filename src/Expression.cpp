@@ -35,8 +35,10 @@ namespace Nitrogen {
 		this->current->addChild(e);
 	}
 
-	void Expression::evaluate(FILE* out) {
+	List<char*>* Expression::evaluate(FILE* out) {
 		ExprNode* current = this->root;
+		List<char*>* lines = new List<char*>(1);
+		char* temp = Util::createTempBuffer();
 
 		/*
 		enum regs {
@@ -59,7 +61,9 @@ namespace Nitrogen {
 				if (current->childCount() == 1) {
 
 					if (current->left->type == NUMBER) {
-						fprintf(out, "\tmov eax %d\n", current->left->data);
+						sprintf(temp, "\tmov eax %d\n", current->left->data);
+						lines->add(strdup(temp));
+						Util::clearTempBuffer(temp);
 						break;
 					}
 
@@ -78,8 +82,13 @@ namespace Nitrogen {
 
 				// NUMBERS
 				if (left->type == NUMBER && right->type == NUMBER) {
-					fprintf(out, "\tmov eax %d\n", left->data);
-					fprintf(out, "\t%s eax %d\n", getOpName(current->data), right->data);
+					sprintf(temp, "\tmov eax %d\n", left->data);
+					lines->add(strdup(temp));
+					Util::clearTempBuffer(temp);
+
+					sprintf(temp, "\t%s eax %d\n", getOpName(current->data), right->data);
+					lines->add(strdup(temp));
+					Util::clearTempBuffer(temp);
 
 					current->type = 0;
 					current->data = 1;
@@ -90,7 +99,10 @@ namespace Nitrogen {
 				if ((left->type == NUMBER && right->type == 0) ||
 						(left->type == 0 && right->type == NUMBER)) {
 					ExprNode* num = getNumber(left, right);
-					fprintf(out, "\t%s eax %d\n", getOpName(current->data), num->data);
+
+					sprintf(temp, "\t%s eax %d\n", getOpName(current->data), num->data);
+					lines->add(strdup(temp));
+					Util::clearTempBuffer(temp);
 
 					current->type = 0;
 					current->data = 1;
@@ -106,6 +118,9 @@ namespace Nitrogen {
 				}
 			}
 		}
+
+		delete[] temp;
+		return lines;
 	}
 
 	const char* Expression::getOpName(int data) {
