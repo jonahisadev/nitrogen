@@ -23,6 +23,8 @@ namespace Nitrogen {
 
 		List<char*>* names;
 		List<Type*>* types;
+
+		bool comment = false;
 		
 	public:
 		Parser(char* source, int length);

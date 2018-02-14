@@ -41,6 +41,7 @@ namespace Nitrogen {
 		COMMA,
 		EXCLAIM,
 		DOT,
+		HASH,
 	};
 
 	enum TokenOperators {

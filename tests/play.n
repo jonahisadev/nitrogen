@@ -7,7 +7,9 @@ struct Color:
     b: i32!
 end
 
+# This is a comment
+
 func main()[i32]:
-    x = 27 + 13 - 5
+    x = 42 + 12 - 7
     return x
 endf

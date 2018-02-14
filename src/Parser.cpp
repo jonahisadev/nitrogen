@@ -14,7 +14,7 @@ namespace Nitrogen {
 		types->add(new Type("i16", 2));
 		types->add(new Type("i8", 1));
 		types->add(new Type("void", 0));
-		types->add(new Type("string", 4));
+		types->add(new Type("string", 4));		// 4 because pointer
 	}
 	
 	Parser::~Parser() {
@@ -34,6 +34,15 @@ namespace Nitrogen {
 		lexi = 0;
 		
 		while (!isImportant(source[i])) {
+			if (comment) {
+				if (source[i] == '\n') {
+					this->comment = false;
+					goto resetLex;
+				}
+				i++;
+				continue;
+			}
+
 			if (source[i] == '\0')
 				break;
 			if (source[i] == '\n')
@@ -45,7 +54,7 @@ namespace Nitrogen {
 			
 			lex[lexi++] = source[i++];
 		}
-		
+
 		lex[lexi] = '\0';
 		
 		// SPECIAL
@@ -89,6 +98,11 @@ namespace Nitrogen {
 				}
 				case '!': {
 					tokens->add(new Token(SPECIAL, EXCLAIM, line));
+					break;
+				}
+				case '#': {
+					this->comment = true;
+					// printf("Found a comment (%d)\n", line);
 					break;
 				}
 				case '.': {
@@ -214,6 +228,8 @@ namespace Nitrogen {
 			case '+':
 				return true;
 			case '-':
+				return true;
+			case '#':
 				return true;
 			default:
 				return false;
