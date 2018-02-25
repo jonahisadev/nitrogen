@@ -22,3 +22,6 @@ $(EXEC): $(OBJ)
 
 clean:
 	rm -rf *.o src/*.o $(EXEC) *.nc *.nvm .symdat
+
+nobin:
+	rm -rf *.nc *.nvm .symdat

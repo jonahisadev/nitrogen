@@ -12,6 +12,11 @@ namespace Nitrogen {
 		this->gvars = new List<Variable*>(1);
 		this->funcs = new List<Function*>(1);
 		this->structs = new List<Struct*>(1);
+
+		// Add default functions
+		Function* f = new Function("delete");
+		f->params->add(new Variable("ptr", new Type("*", 4, false)));
+		funcs->add(f);
 	}
 	
 	Compiler::~Compiler() {
@@ -49,10 +54,28 @@ namespace Nitrogen {
 				}
 
 				// Global Variable Declaration
+				// x: i32!
 				else if (t->getType() == VAR && 
 						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
-						RTOKEN(2)->getType() == TYPE &&
+						(RTOKEN(2)->getType() == TYPE || RTOKEN(2)->getType() == NAME) &&
 						RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == EXCLAIM) {
+					// Check for type in list if name
+					if (RTOKEN(2)->getType() == NAME) {
+						bool isType = false;
+						for (int i = 0; i < types->getSize(); i++) {
+							if (!strcmp(types->get(i)->name, names->get(RTOKEN(2)->getData()))) {
+								isType = true;
+								RTOKEN(2)->setData(i);
+								RTOKEN(2)->setType(TYPE);
+								break;
+							}
+						}
+
+						if (!isType) {
+							error("(%d): '%s' is not a valid type\n", t->getLine(), names->get(RTOKEN(2)->getData()));
+						}
+					}
+
 					Variable* v = new Variable(names->get(t->getData()), types->get(RTOKEN(2)->getData()));
 					// printf("var: {name=\"%s\", type=\"%s\"}\n", v->name, v->type->name);
 					gvars->add(v);
@@ -78,7 +101,7 @@ namespace Nitrogen {
 
 					// Evaluate expression
 					Expression* e = exprs->get(RTOKEN(4)->getData());
-					List<char*>* lines = e->evaluate(out);
+					List<char*>* lines = e->evaluate(out, this);
 					for (int i = 0; i < lines->getSize(); i++)
 						this->initBuffer->add(lines->get(i));
 					char* buf = new char[256];
@@ -112,13 +135,23 @@ namespace Nitrogen {
 						RTOKEN(2)->getType() == EXPR) {
 					Variable* v = gvars->get(temp);
 					Expression* e = exprs->get(RTOKEN(2)->getData());
-					List<char*>* lines = e->evaluate(out);
+					List<char*>* lines = e->evaluate(out, this);
 					for (int i = 0; i < lines->getSize(); i++)
 						fprintf(out, "%s", lines->get(i));
 					fprintf(out, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
 					// TODO: Have evaluator keep track of registers
 					goto end;
 				}
+
+				/*
+				else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
+						RTOKEN(2)->getType() == ID) {
+					// printf("(%d): Found function expr in compiler!\n", t->getLine());
+					fprintf(out, "\tstd $g_%s erx\n", names->get(temp));
+					goto end;
+				}
+				*/
 
 				// End Function
 				if (t->getType() == KEYWORD && t->getData() == ENDF) {
@@ -159,7 +192,15 @@ namespace Nitrogen {
 				else if (t->getType() == ID &&
 						RTOKEN(-1)->getType() != KEYWORD &&
 						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == LEFT_PAR) {
+					bool toVar = false;
+					if (RTOKEN(-1)->getType() == OP && RTOKEN(-1)->getData() == EQUALS &&
+							RTOKEN(-2)->getType() == VAR && (temp = isGlobal(names->get(RTOKEN(-2)->getData()))) != -1) {
+						toVar = true;
+					}
 					parseFunctionCall(current);
+					if (toVar) {
+						fprintf(out, "\tstd $g_%s erx\n", gvars->get(temp)->name);
+					}
 				}
 
 			}
@@ -253,10 +294,45 @@ namespace Nitrogen {
 			*offset += 1;
 		}
 
+		// Get size
 		s->size = size;
-		this->types->add(new Type(s->name, s->size));
-		// printf("Done parsing struct: {name=\"%s\", size=%d} (%d)\n", s->name, s->size, *offset);
+		Type* type = new Type(s->name, s->size, false);
+		this->types->add(type);
+		// printf("Done parsing struct: {name=\"%s\", size=%d}\n", s->name, s->size);
+
+		// Create initializer function
+		Function* init = new Function(s->name);
+		init->ret = type;
+		for (int i = 0; i < s->vars->getSize(); i++) {
+			Variable* v = s->vars->get(i);
+			init->addParam(v);
+		}
+		funcs->add(init);
+
+		// Write out assembly
+		createStructConstructor(s, init);
+
 		return s;
+	}
+
+	void Compiler::createStructConstructor(Struct* s, Function* f) {
+		// Constructor name
+		fprintf(out, "_%s:\n", s->name);
+
+		// Allocate space and move to ERX
+		fprintf(out, "\tmalloc %d\n\tload erx\n", s->size);
+
+		// Set member data from arguments
+		int offset = 0;
+		for (int i = 0; i < s->vars->getSize(); i++) {
+			Variable* v = f->params->get(i);
+			fprintf(out, "\t%sget eax (ebp)+%d\n", getInstSize(v), offset + 8);
+			fprintf(out, "\t%sset (erx)+%d eax\n", getInstSize(v), offset);
+			offset += v->type->size;
+		}
+
+		// Return
+		fprintf(out, "\t%s\n\n", "ret");
 	}
 
 	void Compiler::parseFunctionCall(LinkData<Token*>* func) {
@@ -270,6 +346,7 @@ namespace Nitrogen {
 			error("(%d): No such function '%s'\n", func->data->getLine(), fname);
 			exit(1);
 		}
+		
 
 		// PUSHA
 		fprintf(out, "%s", VM_CALL_HEADER);
@@ -338,13 +415,22 @@ namespace Nitrogen {
 
 				case GVAR: {
 					Variable* g = gvars->get(t->getData());
-					if (g->type->size != varg->type->size) {
-						error("(%d): Incorrect argument size\n", t->getLine());
-						exit(1);
+					if (g->type->size > 4) {
+						argb += 4;
+						fprintf(out, "\tld%s eax $g_%s\n", "d", g->name);
+						fprintf(out, "\tstore eax\n");
+					} else {
+						if (g->type->size > varg->type->size) {
+							error("(%d): Incorrect argument size\n", t->getLine());
+							exit(1);
+						}
+						if (g->type->primitive)
+							argb += g->type->size;
+						else
+							argb += 4;
+						fprintf(out, "\tld%s eax $g_%s\n", getStoreSize(g), g->name);
+						fprintf(out, "\tstore eax\n");
 					}
-					argb += g->type->size;
-					fprintf(out, "\tld%s eax $g_%s\n", getStoreSize(g), g->name);
-					fprintf(out, "\tstore eax\n");
 					break;
 				}
 
@@ -354,7 +440,10 @@ namespace Nitrogen {
 						error("(%d): Incorrect argument size\n", t->getLine());
 						exit(1);
 					}
-					argb += p->type->size;
+					if (p->type->primitive)
+						argb += p->type->size;
+					else
+						argb += 4;
 					fprintf(out, "\t%sget eax (ebp)+%d\n", getStoreSize(p), currentFunction->getParamOffset(t->getData()));
 					fprintf(out, "\tstore eax\n");
 					break;
@@ -373,6 +462,8 @@ namespace Nitrogen {
 		} else if (f->type == F_NATIVE) {
 			fprintf(out, VM_CALL_NATIVE, fname, argb);
 		}
+
+		// ret = f;
 	}
 
 	int Compiler::isFunction(char* name) {
@@ -394,29 +485,35 @@ namespace Nitrogen {
 	}
 
 	const char* Compiler::getStoreSize(Variable* v) {
-		switch (v->type->size) {
-			case 4:
-				return "d";
-			case 2:
-				return "w";
-			case 1:
-				return "b";
-			default:
-				return "d";
+		if (v->type->primitive) {
+			switch (v->type->size) {
+				case 4:
+					return "d";
+				case 2:
+					return "w";
+				case 1:
+					return "b";
+				default:
+					return "d";
+			}
 		}
+		return "d";
 	}
 
 	const char* Compiler::getInstSize(Variable* v) {
-		switch (v->type->size) {
-			case 4:
-				return "i";
-			case 2:
-				return "w";
-			case 1:
-				return "b";
-			default:
-				return "i";
+		if (v->type->primitive) {
+			switch (v->type->size) {
+				case 4:
+					return "i";
+				case 2:
+					return "w";
+				case 1:
+					return "b";
+				default:
+					return "i";
+			}
 		}
+		return "i";
 	}
 
 }

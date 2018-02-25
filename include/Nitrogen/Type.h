@@ -12,10 +12,12 @@ namespace Nitrogen {
 	struct Type {
 		const char* name;
 		int size;
+		bool primitive;
 		
-		Type(const char* name, int size) {
+		Type(const char* name, int size, bool primitive) {
 			this->name = strdup(name);
 			this->size = size;
+			this->primitive = primitive;
 		}
 		
 		~Type() {

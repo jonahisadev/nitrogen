@@ -4,6 +4,8 @@
 #include <Nitrogen/Token.h>
 #include <Nitrogen/Util.h>
 #include <Nitrogen/List.h>
+#include <Nitrogen/Type.h>
+#include <Nitrogen/Compiler.h>
 
 #include <cstdio>
 
@@ -40,6 +42,8 @@ namespace Nitrogen {
 		}
 	};
 
+	class Compiler;
+
 	class Expression {
 	private:
 		ExprNode* root;
@@ -51,10 +55,12 @@ namespace Nitrogen {
 
 		void addOp(int data);
 		void addNumber(int data);
+		void addVariable(int data);
 
-		List<char*>* evaluate(FILE* out);
+		List<char*>* evaluate(FILE* out, Compiler* compiler);
 		const char* getOpName(int data);
 		ExprNode* getNumber(ExprNode* a, ExprNode* b);
+		ExprNode* getVariable(ExprNode* a, ExprNode* b);
 		ExprNode* getRoot() const { return root; }
 	};
 

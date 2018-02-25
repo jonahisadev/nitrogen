@@ -1,0 +1,7 @@
+#section TEXT
+
+_delete:
+	get eax (ebp)+8
+	store eax
+	free
+	ret

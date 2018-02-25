@@ -1,5 +1,5 @@
-x: i32!
-y: i32 = 42
+a: i32!
+b: i32 = 1209
 
 struct Color:
     r: i32!
@@ -7,9 +7,17 @@ struct Color:
     b: i32!
 end
 
-# This is a comment
+test_color: Color!
+
+func this_does_something()[i32]:
+    test_color = Color(0, 0, 255)
+    return 0
+endf
 
 func main()[i32]:
-    x = 42 + 12 - 7
-    return x
+    this_does_something()
+    delete(test_color)
+
+    a = 30 + 12
+    return a
 endf

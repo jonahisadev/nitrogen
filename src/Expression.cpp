@@ -35,7 +35,12 @@ namespace Nitrogen {
 		this->current->addChild(e);
 	}
 
-	List<char*>* Expression::evaluate(FILE* out) {
+	void Expression::addVariable(int data) {
+		ExprNode* e = new ExprNode(VAR, data);
+		this->current->addChild(e);
+	}
+
+	List<char*>* Expression::evaluate(FILE* out, Compiler* compiler) {
 		ExprNode* current = this->root;
 		List<char*>* lines = new List<char*>(1);
 		char* temp = Util::createTempBuffer();
@@ -95,10 +100,40 @@ namespace Nitrogen {
 					current = current->parent;
 				}
 
+				// NUMBER AND GVAR
+				else if ((left->type == NUMBER && right->type == VAR) ||
+						(left->type == VAR && right->type == NUMBER)) {
+					ExprNode* num = getNumber(left, right);
+					ExprNode* var = getVariable(left, right);
+
+					if (num == nullptr || var == nullptr) {
+						error("Number & GVAR: one of these is not what we thought!\n");
+					}
+
+					// Load register with variable contents
+					Variable* gvar = compiler->getGlobalVariable(var->data);
+					sprintf(temp, "\tld%s eax $g_%s\n", compiler->getStoreSize(gvar), gvar->name);
+					lines->add(strdup(temp));
+					Util::clearTempBuffer(temp);
+
+					// Do math
+					sprintf(temp, "\t%s eax %d\n", getOpName(current->data), num->data);
+					lines->add(strdup(temp));
+					Util::clearTempBuffer(temp);
+
+					current->type = 0;
+					current->data = 1;
+					current = current->parent;
+				}
+
 				// NUMBER AND REGISTER
-				if ((left->type == NUMBER && right->type == 0) ||
+				else if ((left->type == NUMBER && right->type == 0) ||
 						(left->type == 0 && right->type == NUMBER)) {
 					ExprNode* num = getNumber(left, right);
+					
+					if (num == nullptr) {
+						error("Number & Register: one of these is not what we thought!\n");
+					}
 
 					sprintf(temp, "\t%s eax %d\n", getOpName(current->data), num->data);
 					lines->add(strdup(temp));
@@ -110,7 +145,7 @@ namespace Nitrogen {
 				}
 
 				// TRAVERSE
-				if (left->type == OP || right->type == OP) {
+				else if (left->type == OP || right->type == OP) {
 					if (left->type == OP)
 						current = left;
 					else
@@ -138,6 +173,15 @@ namespace Nitrogen {
 		if (a->type == NUMBER)
 			return a;
 		else if (b->type == NUMBER)
+			return b;
+		else
+			return nullptr;
+	}
+
+	ExprNode* Expression::getVariable(ExprNode* a, ExprNode* b) {
+		if (a->type == VAR)
+			return a;
+		else if (b->type == VAR)
 			return b;
 		else
 			return nullptr;

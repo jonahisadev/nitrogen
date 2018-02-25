@@ -10,11 +10,11 @@ namespace Nitrogen {
 		this->names = new List<char*>(1);
 		
 		this->types = new List<Type*>(1);
-		types->add(new Type("i32", 4));
-		types->add(new Type("i16", 2));
-		types->add(new Type("i8", 1));
-		types->add(new Type("void", 0));
-		types->add(new Type("string", 4));		// 4 because pointer
+		types->add(new Type("i32", 4, true));
+		types->add(new Type("i16", 2, true));
+		types->add(new Type("i8", 1, true));
+		types->add(new Type("void", 0, true));
+		types->add(new Type("string", 4, true));		// 4 because pointer
 	}
 	
 	Parser::~Parser() {

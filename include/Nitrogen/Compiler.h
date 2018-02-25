@@ -9,10 +9,12 @@
 #include <Nitrogen/List.h>
 #include <Nitrogen/Template.h>
 #include <Nitrogen/Type.h>
-#include <Nitrogen/Expression.h>
 #include <Nitrogen/Struct.h>
+#include <Nitrogen/Expression.h>
 
 namespace Nitrogen {
+
+	class Expression;
 
 	class Compiler {
 	private:
@@ -42,6 +44,7 @@ namespace Nitrogen {
 		Function* createFunction(LinkData<Token*>* func);
 		void parseFunctionCall(LinkData<Token*>* func);
 		Struct* createStruct(LinkData<Token*>* s, int* offset);
+		void createStructConstructor(Struct* s, Function* f);
 
 		void setTokens(LinkedList<Token*>* tokens) { this->tokens = tokens; };
 		void setNames(List<char*>* names) { this->names = names; };
@@ -51,6 +54,11 @@ namespace Nitrogen {
 		
 		const char* getStoreSize(Variable* var);
 		const char* getInstSize(Variable* v);
+
+		// For expression parser
+		Variable* getGlobalVariable(int index) { return this->gvars->get(index); }
+		Function* getCurrentFunction() { return this->currentFunction; }
+		char* getName(int index) { return this->names->get(index); }
 
 		int isFunction(char* name);
 		int isGlobal(char* name);

@@ -23,6 +23,7 @@ namespace Nitrogen {
 			if (t->getType() == OP && t->getData() == EQUALS) {
 				current = tokens->child(current);
 				createExpression(current);
+				continue;
 			}
 
 			else if (t->getType() == NAME) {
@@ -30,6 +31,11 @@ namespace Nitrogen {
 				// Variable declaration
 				if (REL(1)->getType() == SPECIAL && REL(1)->getData() == COLON &&
 						REL(2)->getType() == TYPE) {
+					t->setType(VAR);
+				}
+
+				// Variable set
+				else if (REL(1)->getType() == OP && REL(1)->getData() == EQUALS) {
 					t->setType(VAR);
 				}
 
@@ -66,6 +72,11 @@ namespace Nitrogen {
 					t->setType(VAR);
 				}
 
+				// Type
+				else if (REL(-1)->getType() == SPECIAL && REL(-1)->getData() == COLON) {
+					t->setType(NAME);
+				}
+
 				// Hack
 				else {
 					t->setType(VAR);
@@ -88,12 +99,30 @@ namespace Nitrogen {
 		while (current->data->getLine() == line) {
 			t = current->data;
 			if (t->getType() == NUMBER) {
-				// printf("adding number %d\n", t->getData());
+				// printf("(%d): adding number %d\n", t->getLine(), t->getData());
 				e->addNumber(t->getData());
 			}
 			else if (t->getType() == OP) {
-				// printf("adding operator %d\n", t->getData());
+				// printf("(%d): adding operator %d\n", t->getLine(), t->getData());
 				e->addOp(t->getData());
+			}
+
+			// Probably a function
+			else if (t->getType() == NAME && REL(1)->getType() == SPECIAL && REL(1)->getData() == LEFT_PAR) {
+				// printf("(%d): A function was found in an expression\n", t->getLine());
+				// Leave so we can handle this later
+				return;
+			}
+
+			/*
+			else if (t->getType() == NAME) {
+				// printf("(%d): adding variable %d\n", t->getLine(), t->getData());
+				e->addVariable(t->getData());
+			}
+			*/
+
+			else {
+				error("(%d): Please only numbers and operators!\n", t->getLine());
 			}
 
 			count++;
