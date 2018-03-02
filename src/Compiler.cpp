@@ -20,9 +20,37 @@ namespace Nitrogen {
 	}
 	
 	Compiler::~Compiler() {
+		delete this->tokens;
+
+		for (int i = 0; i < varBuffer->getSize(); i++) {
+			delete[] varBuffer->get(i);
+		}
 		delete this->varBuffer;
+
+		for (int i = 0; i < gvars->getSize(); i++) {
+			free(gvars->get(i));
+		}
 		delete this->gvars;
+
+		for (int i = 0; i < funcs->getSize(); i++) {
+			delete funcs->get(i);
+		}
+		delete this->funcs;
+
+		for (int i = 0; i < structs->getSize(); i++) {
+			delete structs->get(i);
+		}
 		delete this->structs;
+
+		for (int i = 0; i < names->getSize(); i++) {
+			free(names->get(i));
+		}
+		delete this->names;
+
+		for (int i = 0; i < exprs->getSize(); i++) {
+			delete exprs->get(i);
+		}
+		delete this->exprs;
 	}
 	
 	void Compiler::start() {

@@ -23,7 +23,7 @@ namespace Nitrogen {
 	}
 	
 	void Parser::start() {
-		char* lex = new char[256];
+		char lex[256];
 		int lexi = 0;
 		int i = 0;
 		int line = 1;

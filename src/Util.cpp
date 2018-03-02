@@ -10,15 +10,20 @@ namespace Nitrogen {
 		}
 		
 		fseek(file, 0, SEEK_END);
-		int size = ftell(file);
+		// int size = ftell(file);
+		*length = ftell(file);
 		fseek(file, 0, SEEK_SET);
-		*length = size;
+		// *length = size;
 		
-		char* buffer = new char[size];
-		fread(buffer, 1, size, file);
+		if (*length <= 0) {
+			error("Invalid file read ('%s')\n", path);
+		}
+
+		char* buffer = new char[*length+1];
+		fread(buffer, 1, *length, file);
 		fclose(file);
 		
-		buffer[size] = '\0';
+		buffer[*length] = '\0';
 		return buffer;
 	}
 	

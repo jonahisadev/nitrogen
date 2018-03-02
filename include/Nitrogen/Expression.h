@@ -12,9 +12,9 @@
 namespace Nitrogen {
 
 	struct ExprNode {
-		ExprNode* parent;
-		ExprNode* left;
-		ExprNode* right;
+		ExprNode* parent = nullptr;
+		ExprNode* left = nullptr;
+		ExprNode* right = nullptr;
 
 		int type;
 		int data;
@@ -25,7 +25,7 @@ namespace Nitrogen {
 		}
 
 		void addChild(ExprNode* en) {
-			if (!left) {
+			if (left == nullptr) {
 				this->left = en;
 			} else {
 				this->right = en;

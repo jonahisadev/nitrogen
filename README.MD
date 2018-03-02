@@ -15,3 +15,7 @@ In `tests/play.n` you can basically see the current features of the language
 	* Keep track of registers for math
 	* Status pointer for special cases
 * Native Support (NVM needs work too)
+* Arrays
+* Structs
+	* Access struct members
+	* Allow functions to be created within structs

@@ -1,5 +1,5 @@
 CC = g++
-LDFLAGS =
+LDFLAGS = -g
 CFLAGS = -I include -g -c -std=c++11
 SRC = $(wildcard *.cpp src/*.cpp)
 HEAD = $(wildcard include/Nitrogen/*.h)

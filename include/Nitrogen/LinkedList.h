@@ -1,6 +1,8 @@
 #ifndef NITROGEN_LINKEDLIST_H
 #define NITROGEN_LINKEDLIST_H
 
+#include <cstdio>
+
 namespace Nitrogen {
 
 	template <class T>
@@ -86,7 +88,19 @@ namespace Nitrogen {
 
 	template <class T>
 	LinkedList<T>::~LinkedList() {
-		// TODO: do that later
+		LinkData<T>* current = this->root;
+		int count = 0;
+		while (current->child != nullptr) {
+			current = child(current);
+			count++;
+		}
+
+		LinkData<T>* temp;
+		for (int i = 0; i < count; i++) {
+			temp = current->parent;
+			delete current;
+			current = temp;
+		}
 	}
 
 	template <class T>
