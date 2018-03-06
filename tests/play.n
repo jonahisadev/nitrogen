@@ -1,22 +1,22 @@
 a: i32!
 b: i32 = 1209
 
+x: i32*!                # Creates an array object
+
 struct Color:
     r: i32!
     g: i32!
     b: i32!
 end
 
-test_color: Color!
-
-func this_does_something()[i32]:
-    test_color = Color(0, 0, 255)
-    return 0
-endf
+color_test: Color!
 
 func main()[i32]:
-    this_does_something()
-    delete(test_color)
+    color_test = Color(0, 128, 255)
+    x = [5]
+
+    delete(color_test)
+    delete(x)
 
     a = 30 + 12
     return a

@@ -114,6 +114,14 @@ namespace Nitrogen {
 				return;
 			}
 
+			// Probably an array
+			else if (t->getType() == SPECIAL && t->getData() == LEFT_BRACK &&
+					REL(2)->getType() == SPECIAL && REL(2)->getData() == RIGHT_BRACK) {
+				printf("(%d): An array init was found in an expression\n", t->getLine());
+				// Leave so we can handle this later
+				return;
+			}
+
 			/*
 			else if (t->getType() == NAME) {
 				// printf("(%d): adding variable %d\n", t->getLine(), t->getData());

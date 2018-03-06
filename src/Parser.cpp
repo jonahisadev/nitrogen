@@ -92,6 +92,10 @@ namespace Nitrogen {
 					tokens->add(new Token(OP, MINUS, line));
 					break;
 				}
+				case '*': {
+					tokens->add(new Token(SPECIAL, STAR, line));
+					break;
+				}
 				case ',': {
 					tokens->add(new Token(SPECIAL, COMMA, line));
 					break;
@@ -228,6 +232,8 @@ namespace Nitrogen {
 			case '+':
 				return true;
 			case '-':
+				return true;
+			case '*':
 				return true;
 			case '#':
 				return true;

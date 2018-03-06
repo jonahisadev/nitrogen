@@ -16,6 +16,7 @@ In `tests/play.n` you can basically see the current features of the language
 	* Status pointer for special cases
 * Native Support (NVM needs work too)
 * Arrays
+	* Allow actual get/set functionality
 * Structs
 	* Access struct members
 	* Allow functions to be created within structs

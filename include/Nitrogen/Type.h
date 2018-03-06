@@ -28,6 +28,7 @@ namespace Nitrogen {
 	struct Variable {
 		const char* name;
 		Type* type;
+		bool array;
 		// int data;
 		
 		Variable(const char* name, Type* type) {

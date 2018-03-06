@@ -115,6 +115,42 @@ namespace Nitrogen {
 					delete[] buf;
 				}
 
+				// Global Array Declaration
+				// x: i32!
+				else if (t->getType() == VAR && 
+						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
+						(RTOKEN(2)->getType() == TYPE || RTOKEN(2)->getType() == NAME) &&
+						RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == STAR &&
+						RTOKEN(4)->getType() == SPECIAL && RTOKEN(4)->getData() == EXCLAIM) {
+					// Check for type in list if name
+					if (RTOKEN(2)->getType() == NAME) {
+						bool isType = false;
+						for (int i = 0; i < types->getSize(); i++) {
+							if (!strcmp(types->get(i)->name, names->get(RTOKEN(2)->getData()))) {
+								isType = true;
+								RTOKEN(2)->setData(i);
+								RTOKEN(2)->setType(TYPE);
+								break;
+							}
+						}
+
+						if (!isType) {
+							error("(%d): '%s' is not a valid type\n", t->getLine(), names->get(RTOKEN(2)->getData()));
+						}
+					}
+
+					Variable* v = new Variable(names->get(t->getData()), types->get(RTOKEN(2)->getData()));
+					v->array = true;
+					// printf("var: {name=\"%s\", type=\"%s*\"}\n", v->name, v->type->name);
+					gvars->add(v);
+					//t->setType(GVAR);
+
+					char* buf = new char[256];
+					sprintf(buf, VM_VAR_DEC_AND_INIT, v->name, getStoreSize(v), 0);
+					this->varBuffer->add(strdup(buf));
+					delete[] buf;
+				}
+
 				// TODO: FIX
 				// Global Variable Declaration and Initialization
 				else if (t->getType() == VAR && 
@@ -168,6 +204,26 @@ namespace Nitrogen {
 						fprintf(out, "%s", lines->get(i));
 					fprintf(out, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
 					// TODO: Have evaluator keep track of registers
+					goto end;
+				}
+
+				// Set Global Array (ONLY NUMBERS!!)
+				else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
+						RTOKEN(2)->getType() == SPECIAL && RTOKEN(2)->getData() == LEFT_BRACK &&
+						RTOKEN(3)->getType() == NUMBER &&
+						RTOKEN(4)->getType() == SPECIAL && RTOKEN(4)->getData() == RIGHT_BRACK) {
+					Variable* v = gvars->get(temp);
+					int size;
+					if (v->type->primitive) {
+						size = RTOKEN(3)->getData() * v->type->size;
+					} else {
+						size = RTOKEN(3)->getData() * 4;
+					}
+					
+					fprintf(out, "\tmalloc %d\n", size);
+					fprintf(out, "\tload eax\n\tstd $g_%s eax\n", v->name);
+
 					goto end;
 				}
 
