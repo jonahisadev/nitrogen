@@ -41,6 +41,8 @@ namespace Nitrogen {
 		void start();
 		void getNatives();
 
+		int insideFunction(LinkData<Token*>* current, Token* t, Function* currentFunction);
+
 		Function* createFunction(LinkData<Token*>* func);
 		void parseFunctionCall(LinkData<Token*>* func);
 		Struct* createStruct(LinkData<Token*>* s, int* offset);
@@ -54,6 +56,8 @@ namespace Nitrogen {
 		
 		const char* getStoreSize(Variable* var);
 		const char* getInstSize(Variable* v);
+
+		Struct* getStructByName(const char* name);
 
 		// For expression parser
 		Variable* getGlobalVariable(int index) { return this->gvars->get(index); }

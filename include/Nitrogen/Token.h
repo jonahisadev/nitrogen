@@ -30,6 +30,7 @@ namespace Nitrogen {
 		NATIVE,
 		STRUCT,
 		END,
+		DOLLAR,
 	};
 	
 	enum TokenSpecial {

@@ -20,9 +20,6 @@ R"str(	call @_main
 	
 )str";
 
-	static const char* VM_LABEL = R"str(_%s:
-)str";
-
 	static const char* VM_RETURN_CONST = 
 R"str(	mov erx %d
 )str";

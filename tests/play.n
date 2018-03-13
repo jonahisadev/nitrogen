@@ -1,23 +1,32 @@
-a: i32!
-b: i32 = 1209
+x: i32!
+y: i32 = 42
 
-x: i32*!                # Creates an array object
+a: i32*!
 
-struct Color:
-    r: i32!
-    g: i32!
-    b: i32!
+struct Structure:
+    data: i32!
+    more: i32!
+
+    func memberFunction()[i32]:
+        y = 30
+        return 0
+    endf
 end
 
-color_test: Color!
+s: Structure!
+
+func arrays()[i32]:
+    a = [5]
+    delete(a)
+    return 0
+endf
 
 func main()[i32]:
-    color_test = Color(0, 128, 255)
-    x = [5]
+    s = Structure(0, 0)
+    s.memberFunction()
+    arrays()
+    
+    delete(s)
 
-    delete(color_test)
-    delete(x)
-
-    a = 30 + 12
-    return a
+    return y
 endf

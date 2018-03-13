@@ -109,6 +109,10 @@ namespace Nitrogen {
 					// printf("Found a comment (%d)\n", line);
 					break;
 				}
+				case '$': {
+					tokens->add(new Token(KEYWORD, DOLLAR, line));
+					break;
+				}
 				case '.': {
 					tokens->add(new Token(SPECIAL, DOT, line));
 					break;
@@ -236,6 +240,8 @@ namespace Nitrogen {
 			case '*':
 				return true;
 			case '#':
+				return true;
+			case '$':
 				return true;
 			default:
 				return false;

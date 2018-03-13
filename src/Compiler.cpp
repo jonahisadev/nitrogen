@@ -185,106 +185,19 @@ namespace Nitrogen {
 						RTOKEN(1)->getType() == ID) {
 					current = tokens->child(current);
 					Function* f = createFunction(current);
+					// printf("creating function '%s'\n", f->name);
+					funcs->add(f);
 					currentFunction = f;
-					fprintf(out, VM_LABEL, f->name);
+					fprintf(out, "_%s:\n", f->name);
 				}
 
 			} else {
 
 				// printf("Inside of function\n");
 
-				// Set Global Variable
-				if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
-						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
-						RTOKEN(2)->getType() == EXPR) {
-					Variable* v = gvars->get(temp);
-					Expression* e = exprs->get(RTOKEN(2)->getData());
-					List<char*>* lines = e->evaluate(out, this);
-					for (int i = 0; i < lines->getSize(); i++)
-						fprintf(out, "%s", lines->get(i));
-					fprintf(out, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
-					// TODO: Have evaluator keep track of registers
-					goto end;
-				}
-
-				// Set Global Array (ONLY NUMBERS!!)
-				else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
-						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
-						RTOKEN(2)->getType() == SPECIAL && RTOKEN(2)->getData() == LEFT_BRACK &&
-						RTOKEN(3)->getType() == NUMBER &&
-						RTOKEN(4)->getType() == SPECIAL && RTOKEN(4)->getData() == RIGHT_BRACK) {
-					Variable* v = gvars->get(temp);
-					int size;
-					if (v->type->primitive) {
-						size = RTOKEN(3)->getData() * v->type->size;
-					} else {
-						size = RTOKEN(3)->getData() * 4;
-					}
-					
-					fprintf(out, "\tmalloc %d\n", size);
-					fprintf(out, "\tload eax\n\tstd $g_%s eax\n", v->name);
-
-					goto end;
-				}
-
-				/*
-				else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
-						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
-						RTOKEN(2)->getType() == ID) {
-					// printf("(%d): Found function expr in compiler!\n", t->getLine());
-					fprintf(out, "\tstd $g_%s erx\n", names->get(temp));
-					goto end;
-				}
-				*/
-
-				// End Function
-				if (t->getType() == KEYWORD && t->getData() == ENDF) {
-					fprintf(out, "\t%s\n\n", "ret");
+				int res = insideFunction(current, t, currentFunction);
+				if (!res) {
 					currentFunction = nullptr;
-				}
-
-				// Return Variable
-				else if (t->getType() == KEYWORD && t->getData() == RETURN &&
-						RTOKEN(1)->getType() == VAR) {
-					temp = currentFunction->isParam(names->get(RTOKEN(1)->getData()));
-					if (temp != -1) {
-						Variable* v = currentFunction->params->get(temp);
-						fprintf(out, VM_RETURN_P_VAR, getInstSize(v), currentFunction->getParamOffset(temp) + 8);
-					} else if ((temp = isGlobal(names->get(RTOKEN(1)->getData()))) != -1) {
-						Variable* v = gvars->get(temp);
-						fprintf(out, VM_RETURN_G_VAR, getStoreSize(v), v->name);
-					}
-				}
-
-				// Return Constant
-				else if (t->getType() == KEYWORD && t->getData() == RETURN &&
-						RTOKEN(1)->getType() == NUMBER) {
-					fprintf(out, VM_RETURN_CONST, RTOKEN(1)->getData());
-				}
-
-				/*
-				// Set Global Variable
-				else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
-						RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
-						RTOKEN(2)->getType() == NUMBER) {
-					Variable* v = gvars->get(temp);
-					fprintf(out, VM_VAR_SET, getStoreSize(v), v->name, RTOKEN(2)->getData());
-				}
-				*/
-
-				// Function Call
-				else if (t->getType() == ID &&
-						RTOKEN(-1)->getType() != KEYWORD &&
-						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == LEFT_PAR) {
-					bool toVar = false;
-					if (RTOKEN(-1)->getType() == OP && RTOKEN(-1)->getData() == EQUALS &&
-							RTOKEN(-2)->getType() == VAR && (temp = isGlobal(names->get(RTOKEN(-2)->getData()))) != -1) {
-						toVar = true;
-					}
-					parseFunctionCall(current);
-					if (toVar) {
-						fprintf(out, "\tstd $g_%s erx\n", gvars->get(temp)->name);
-					}
 				}
 
 			}
@@ -311,8 +224,110 @@ namespace Nitrogen {
 		fclose(out);
 	}
 
+	int Compiler::insideFunction(LinkData<Token*>* current, Token* t, Function* func) {
+		int temp = 0;
+		
+		// Set Global Variable
+		if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+				RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
+				RTOKEN(2)->getType() == EXPR) {
+			Variable* v = gvars->get(temp);
+			Expression* e = exprs->get(RTOKEN(2)->getData());
+			List<char*>* lines = e->evaluate(out, this);
+			for (int i = 0; i < lines->getSize(); i++)
+				fprintf(out, "%s", lines->get(i));
+			fprintf(out, VM_VAR_SET_E, getStoreSize(v), v->name, "eax");
+			// TODO: Have evaluator keep track of registers
+			return 1;
+		}
+
+		// Set Global Array (ONLY NUMBERS!!)
+		else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+				RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
+				RTOKEN(2)->getType() == SPECIAL && RTOKEN(2)->getData() == LEFT_BRACK &&
+				RTOKEN(3)->getType() == NUMBER &&
+				RTOKEN(4)->getType() == SPECIAL && RTOKEN(4)->getData() == RIGHT_BRACK) {
+			Variable* v = gvars->get(temp);
+			int size;
+			if (v->type->primitive) {
+				size = RTOKEN(3)->getData() * v->type->size;
+			} else {
+				size = RTOKEN(3)->getData() * 4;
+			}
+			
+			fprintf(out, "\tmalloc %d\n", size);
+			fprintf(out, "\tload eax\n\tstd $g_%s eax\n", v->name);
+
+			return 1;
+		}
+
+		/*
+		else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+				RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
+				RTOKEN(2)->getType() == ID) {
+			// printf("(%d): Found function expr in compiler!\n", t->getLine());
+			fprintf(out, "\tstd $g_%s erx\n", names->get(temp));
+			goto end;
+		}
+		*/
+
+		// End Function
+		if (t->getType() == KEYWORD && t->getData() == ENDF) {
+			fprintf(out, "\t%s\n\n", "ret");
+			func = nullptr;
+			return 0;
+		}
+
+		// Return Variable
+		else if (t->getType() == KEYWORD && t->getData() == RETURN &&
+				RTOKEN(1)->getType() == VAR) {
+			temp = func->isParam(names->get(RTOKEN(1)->getData()));
+			if (temp != -1) {
+				Variable* v = func->params->get(temp);
+				fprintf(out, VM_RETURN_P_VAR, getInstSize(v), func->getParamOffset(temp) + 8);
+			} else if ((temp = isGlobal(names->get(RTOKEN(1)->getData()))) != -1) {
+				Variable* v = gvars->get(temp);
+				fprintf(out, VM_RETURN_G_VAR, getStoreSize(v), v->name);
+			}
+		}
+
+		// Return Constant
+		else if (t->getType() == KEYWORD && t->getData() == RETURN &&
+				RTOKEN(1)->getType() == NUMBER) {
+			fprintf(out, VM_RETURN_CONST, RTOKEN(1)->getData());
+		}
+
+		/*
+		// Set Global Variable
+		else if (t->getType() == VAR && (temp = isGlobal(names->get(t->getData()))) != -1 &&
+				RTOKEN(1)->getType() == OP && RTOKEN(1)->getData() == EQUALS &&
+				RTOKEN(2)->getType() == NUMBER) {
+			Variable* v = gvars->get(temp);
+			fprintf(out, VM_VAR_SET, getStoreSize(v), v->name, RTOKEN(2)->getData());
+		}
+		*/
+
+		// Function Call
+		else if (t->getType() == ID &&
+				RTOKEN(-1)->getType() != KEYWORD &&
+				RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == LEFT_PAR) {
+			bool toVar = false;
+			if (RTOKEN(-1)->getType() == OP && RTOKEN(-1)->getData() == EQUALS &&
+					RTOKEN(-2)->getType() == VAR && (temp = isGlobal(names->get(RTOKEN(-2)->getData()))) != -1) {
+				toVar = true;
+			}
+			parseFunctionCall(current);
+			if (toVar) {
+				fprintf(out, "\tstd $g_%s erx\n", gvars->get(temp)->name);
+			}
+		}
+
+		return 1;
+	}
+
 	Function* Compiler::createFunction(LinkData<Token*>* func) {
-		Function* f = new Function(ids->get(func->data->getData()));
+		char* fname = ids->get(func->data->getData());
+		Function* f = new Function(fname);
 
 		Token* t;
 		LinkData<Token*>* current = func->child;
@@ -342,7 +357,7 @@ namespace Nitrogen {
 			current = tokens->child(current);
 		}
 
-		funcs->add(f);
+		// funcs->add(f);
 		return f;
 	}
 
@@ -353,25 +368,50 @@ namespace Nitrogen {
 		Token* t;
 		LinkData<Token*>* current = tokens->child(start);
 		int size = 0;
+		Function* func = nullptr;
+
 		while (current != nullptr) {
 			t = current->data;
 
-			// Variable
-			if (t->getType() == VAR &&
-					RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
-					RTOKEN(2)->getType() == TYPE &&
-					RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == EXCLAIM) {
-				char* name = names->get(t->getData());
-				Type* type = types->get(RTOKEN(2)->getData());
-				Variable* v = new Variable(name, type);
-				s->addVariable(v);
-				// printf("\tvar: {name=\"%s\", type=\"%s\"}\n", v->name, v->type->name);
-				size += type->size;
-			}
+			if (func == nullptr) {
+				// Variable
+				if (t->getType() == VAR &&
+						RTOKEN(1)->getType() == SPECIAL && RTOKEN(1)->getData() == COLON &&
+						RTOKEN(2)->getType() == TYPE &&
+						RTOKEN(3)->getType() == SPECIAL && RTOKEN(3)->getData() == EXCLAIM) {
+					char* name = names->get(t->getData());
+					Type* type = types->get(RTOKEN(2)->getData());
+					Variable* v = new Variable(name, type);
+					s->addVariable(v);
+					// printf("\tvar:  {name=\"%s\", type=\"%s\"}\n", v->name, v->type->name);
+					size += type->size;
+				}
 
-			// End Struct
-			else if (t->getType() == KEYWORD && t->getData() == END) {
-				break;
+				// Function
+				else if (t->getType() == KEYWORD && t->getData() == FUNC &&
+						RTOKEN(1)->getType() == ID) {
+					current = tokens->child(current);
+					Function* f = createFunction(current);
+					// printf("\tfunc: {name=\"%s\", type=\"%s\"}\n", f->name, f->ret->name);
+					s->funcs->add(f);
+					func = f;
+
+					// Output function name
+					char name[256];
+					sprintf(name, "%s_%s", s->name, f->name);
+					fprintf(out, "_%s:\n", name);
+					// continue;
+				}
+
+				// End Struct
+				else if (t->getType() == KEYWORD && t->getData() == END) {
+					break;
+				}
+			} else {
+				int result = insideFunction(current, t, func);
+				if (!result) {
+					func = nullptr;
+				}
 			}
 
 			current = tokens->child(current);
@@ -423,14 +463,50 @@ namespace Nitrogen {
 		// Check Name
 		char* fname = names->get(func->data->getData());
 		Function* f;
+		Variable* v = nullptr;
 		int n;
 		if ((n = isFunction(fname)) != -1) {
 			f = funcs->get(n);
 		} else {
-			error("(%d): No such function '%s'\n", func->data->getLine(), fname);
-			exit(1);
+			// Member function
+			if (func->parent->data->getType() == SPECIAL && func->parent->data->getData() == DOT) {
+				Token* tok = func->parent->parent->data;
+				int index = 0;
+				Variable* var;
+				Struct* s;
+
+				// Get global variable
+				if ((index = isGlobal(names->get(tok->getData()))) != -1) {
+					var = gvars->get(index);
+				} else {
+					error("(%d): Only global variables please!\n", tok->getLine());
+					exit(1);
+				}
+
+				// Get struct
+				s = getStructByName(var->type->name);
+				if (s == nullptr) {
+					error("(%d): No member function '%s'\n", func->data->getLine(), fname);
+					exit(1);
+				}
+
+				// printf("(%d): Trying to call a member function '%s' from struct '%s'\n", func->data->getLine(), fname, s->name);
+				
+				// Get function
+				f = s->getFunction(fname);
+				if (f == nullptr) {
+					error("(%d): No member function '%s' in type '%s'\n", tok->getLine(), fname, var->type->name);
+				}
+
+				v = var;
+			}
+			
+			// Function doesn't exist
+			else {
+				error("(%d): No such function '%s'\n", func->data->getLine(), fname);
+				exit(1);
+			}
 		}
-		
 
 		// PUSHA
 		fprintf(out, "%s", VM_CALL_HEADER);
@@ -440,8 +516,13 @@ namespace Nitrogen {
 		int argc = 0;
 		List<Token*>* args = new List<Token*>(1);
 
-		// Parse Arguments
+		// Output member info should this be a member function
+		if (v != nullptr) {
+			fprintf(out, "\tldd eax $g_%s\n\tstore eax\n", v->name);
+			argb += 4;		// Extra pointer
+		}
 
+		// Parse Arguments
 		Token* t;
 		LinkData<Token*>* current = func->child;
 		while (current != nullptr) {
@@ -459,6 +540,12 @@ namespace Nitrogen {
 					t->setData(index);
 				}
 				args->add(t);
+			}
+
+			else if (t->getType() == KEYWORD && t->getData() == FUNC &&
+					RTOKEN(1)->getType() == ID) {
+				current = tokens->child(current);
+				Function* f = createFunction(current);
 			}
 
 			// Number
@@ -542,7 +629,13 @@ namespace Nitrogen {
 
 		// Finish
 		if (f->type == F_LOCAL) {
-			fprintf(out, VM_CALL_END, fname, argb);
+			if (v) {			// Member Function
+				char memberCall[256];
+				sprintf(memberCall, "@_%s_%s", v->type->name, fname);
+				fprintf(out, "\tcall %s\n\tadd esp %d\n\tpopa\n", memberCall, argb);
+			} else {			// Global Function
+				fprintf(out, VM_CALL_END, fname, argb);
+			}
 		} else if (f->type == F_NATIVE) {
 			fprintf(out, VM_CALL_NATIVE, fname, argb);
 		}
@@ -566,6 +659,17 @@ namespace Nitrogen {
 			}
 		}
 		return -1;
+	}
+
+	Struct* Compiler::getStructByName(const char* name) {
+		for (int i = 0; i < structs->getSize(); i++) {
+			Struct* s = structs->get(i);
+			// printf("'%s' vs '%s'\n", s->name, name);
+			if (!strcmp(s->name, name)) {
+				return s;
+			}
+		}
+		return nullptr;
 	}
 
 	const char* Compiler::getStoreSize(Variable* v) {

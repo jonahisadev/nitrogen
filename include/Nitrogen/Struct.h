@@ -3,6 +3,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 #include <Nitrogen/Util.h>
 #include <Nitrogen/List.h>
@@ -14,6 +15,7 @@ namespace Nitrogen {
 	public:
 		char* name;
 		List<Variable*>* vars;
+		List<Function*>* funcs;
 		int size;
 
 		Struct(char* name);
@@ -21,6 +23,7 @@ namespace Nitrogen {
 
 		void addVariable(Variable* v);
 		Variable* getVariable(char* str);
+		Function* getFunction(const char* str);
 	};
 	template class List<Struct*>;
 

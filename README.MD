@@ -19,4 +19,4 @@ In `tests/play.n` you can basically see the current features of the language
 	* Allow actual get/set functionality
 * Structs
 	* Access struct members
-	* Allow functions to be created within structs
+	* Allow member functions to access struct members
