@@ -41,8 +41,11 @@ int main(int argc, char** argv) {
 		delete c;
 		delete p;
 		
-		system("nvm -c out.nvm -g");
-		//system("rm -rf out.nvm");
+		system("nvmc -c out.nvm -g");
+		
+		#ifdef RELEASE
+			system("rm -rf out.nvm");
+		#endif
 		
 		std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double, std::milli> time_span = t2 - t1;

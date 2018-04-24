@@ -55,7 +55,7 @@ R"str(	call @_%s
 )str";
 
 	static const char* VM_CALL_NATIVE = 
-R"str(	ncall %s
+R"str(	ncall %%%s
 	add esp %d
 	popa
 )str";

@@ -21,6 +21,8 @@ func arrays()[i32]:
     return 0
 endf
 
+native func n_test()[i32]
+
 func main()[i32]:
     s = Structure(0, 0)
     s.memberFunction()

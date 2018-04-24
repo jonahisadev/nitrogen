@@ -183,12 +183,28 @@ namespace Nitrogen {
 				// Function
 				else if (t->getType() == KEYWORD && t->getData() == FUNC &&
 						RTOKEN(1)->getType() == ID) {
+
+					// Check for native
+					bool native = false;
+					if (RTOKEN(-1)->getType() == KEYWORD && RTOKEN(-1)->getData() == NATIVE) {
+						native = true;
+					}
+
+					// Parse function
 					current = tokens->child(current);
 					Function* f = createFunction(current);
 					// printf("creating function '%s'\n", f->name);
+
+					// Native
+					if (native) {
+						f->type = F_NATIVE;
+						printf("(%d): native function\n", t->getLine());
+					} else {
+						currentFunction = f;
+						fprintf(out, "_%s:\n", f->name);
+					}
+
 					funcs->add(f);
-					currentFunction = f;
-					fprintf(out, "_%s:\n", f->name);
 				}
 
 			} else {
